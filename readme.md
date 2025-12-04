@@ -32,8 +32,6 @@ After installation, log in with your Google account or email.
 
 3. Ensure docker desktop is installed and open
 
-4. `.\start.bat`
-
 ## 5. Starting the application
 
 Run: `.\start.bat` in the root directory to start the application

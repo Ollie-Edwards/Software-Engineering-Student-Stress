@@ -33,6 +33,14 @@ jobs:
         working-directory: ./Backend
         run: pytest --cov=app --cov-report=term-missing --cov-report=html:htmlcov
 
+      # Debug: List files to verify htmlcov exists
+      - name: List coverage files
+        run: |
+          echo "Checking Backend/htmlcov directory:"
+          ls -la Backend/htmlcov/ || echo "htmlcov directory not found!"
+          echo "Files in htmlcov:"
+          find Backend/htmlcov -type f || echo "No files found!"
+
       # Upload coverage report as artifact
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

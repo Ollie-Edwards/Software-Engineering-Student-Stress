@@ -1,0 +1,36 @@
+name: Run Unit Tests
+run-name: ${{ github.actor }} is running unit tests
+on: [push]
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed to push new branches
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+
+      # Run tests with coverage
+      - name: Run tests with coverage
+        run: pytest --cov=cards --cov-report=term-missing --cov-report=html:htmlcov
+
+      # Upload coverage report as artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/

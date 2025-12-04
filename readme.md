@@ -40,7 +40,11 @@ docker compose up --build
 
 1. `git clone https://github.com/Ollie-Edwards/Software-Engineering-Student-Stress.git`
 
-2.
+2. `cd .\Software-Engineering-Student-Stress\`
+
+3. Ensure docker desktop is installed and open
+
+4. `.\start.bat`
 
 ## 5. Starting the application
 

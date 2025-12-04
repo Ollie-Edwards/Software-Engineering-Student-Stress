@@ -2,9 +2,9 @@ from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from database import Base, engine, get_db
+from database import Base, engine, get_db, DATABASE_URL
 from models.user import User
 from models.task import Task
 from models.subtask import Subtask
@@ -13,7 +13,6 @@ import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
-from database import DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 while True:
@@ -56,8 +55,7 @@ class TaskResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @app.get(

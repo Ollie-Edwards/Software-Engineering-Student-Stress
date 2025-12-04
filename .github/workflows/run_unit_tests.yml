@@ -20,7 +20,7 @@ jobs:
 
       # Install dependencies
       - name: Install dependencies
-        working-directory: ./backend
+        working-directory: ./Backend
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
@@ -28,7 +28,7 @@ jobs:
 
       # Run tests with coverage
       - name: Run tests with coverage
-        working-directory: ./backend
+        working-directory: ./Backend
         run: pytest --cov=app --cov-report=term-missing --cov-report=html:htmlcov
 
       # Upload coverage report as artifact
@@ -36,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: backend/htmlcov/
+          path: Backend/htmlcov/

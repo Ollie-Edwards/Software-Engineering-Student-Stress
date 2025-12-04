@@ -42,6 +42,7 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return {"message": "Hello World"}
 
+
 class TaskResponse(BaseModel):
     id: int
     user_id: int
@@ -58,11 +59,12 @@ class TaskResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 @app.get(
     "/tasks",
     response_model=List[TaskResponse],
     summary="Retrieve all tasks",
-    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status."
+    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
 )
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()

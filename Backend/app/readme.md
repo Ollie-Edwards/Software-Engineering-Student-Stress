@@ -36,6 +36,12 @@ docker-compose down -v
 docker compose up --build
 ```
 
-## 4. Starting the application
+## 4. Installation
+
+1. `git clone https://github.com/Ollie-Edwards/Software-Engineering-Student-Stress.git`
+
+2.
+
+## 5. Starting the application
 
 Run: `.\start.bat` in the root directory to start the application

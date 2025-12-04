@@ -1,0 +1,23 @@
+name: Linting and formatting
+run-name: ${{ github.actor }} is running Super Linter
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Super-Linter
+        uses: super-linter/super-linter@v7.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BRANCH: origin/main
+
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_PYTHON_BLACK: true
+
+          # Only lint files in the backend/app directory
+          INPUT_INCLUDE: ./backend/app

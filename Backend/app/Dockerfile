@@ -1,6 +1,10 @@
 FROM python:3.12.0-alpine
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
+
+ENV PYTHONPATH=/app
 
 COPY requirements.txt /app
 

@@ -7,7 +7,7 @@ start cmd /k "cd /d Frontend && npm install && npm run dev"
 
 REM === Start Backend via Docker ===
 echo Launching FastAPI backend with Docker...
-start cmd /k "cd /d Backend && docker compose up --build"
+start cmd /k "cd /d Backend && docker compose down -v && docker compose up --build"
 
 echo Both servers are now running.
 pause

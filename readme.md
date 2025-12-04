@@ -24,18 +24,6 @@ After installation, log in with your Google account or email.
 
 6. Once connected, view the databases on `Mydb > Schemas > public > Tables > subtasks / tasks / users`
 
-### Note: Restarting Database after changing schema.sql or seed.sql
-
-If you need to reset the database schema or seed data:
-
-```bash
-# Stop containers and delete volumes
-docker-compose down -v
-
-# Rebuild and start containers
-docker compose up --build
-```
-
 ## 4. Installation
 
 1. `git clone https://github.com/Ollie-Edwards/Software-Engineering-Student-Stress.git`

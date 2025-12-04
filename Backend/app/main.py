@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Depends
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel
 
 from database import Base, engine, get_db
 from models.user import User
@@ -39,8 +42,28 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return {"message": "Hello World"}
 
+class TaskResponse(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    description: Optional[str] = None
+    status: bool
+    importance: int
+    length: Optional[int] = None
+    tag_id: Optional[int] = None
+    due_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
-@app.get("/tasks")
+    class Config:
+        orm_mode = True
+
+@app.get(
+    "/tasks",
+    response_model=List[TaskResponse],
+    summary="Retrieve all tasks",
+    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status."
+)
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks

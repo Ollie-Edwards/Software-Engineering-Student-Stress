@@ -50,6 +50,10 @@ jobs:
           name: coverage-report
           path: Backend/htmlcov/
 
+      # Remove .gitignore from htmlcov to allow deployment
+      - name: Remove .gitignore from coverage report
+        run: rm -f Backend/htmlcov/.gitignore
+
       # Deploy coverage to GitHub Pages
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'

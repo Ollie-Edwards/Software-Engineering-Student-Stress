@@ -3,11 +3,14 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
 
+
 class Subtask(Base):
     __tablename__ = "subtasks"
 
     id = Column(Integer, primary_key=True)
-    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
+    task_id = Column(
+        Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+    )
 
     title = Column(String(255), nullable=False)
     status = Column(Boolean, nullable=False)

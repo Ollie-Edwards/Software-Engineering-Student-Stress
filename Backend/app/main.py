@@ -24,11 +24,13 @@ while True:
 
 Base.metadata.create_all(bind=engine)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting up...")
     yield
     print("Shutting down...")
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -36,6 +38,7 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
 
 @app.get("/tasks")
 def get_tasks(db: Session = Depends(get_db)):

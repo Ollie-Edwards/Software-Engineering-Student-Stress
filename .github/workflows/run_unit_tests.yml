@@ -38,6 +38,8 @@ jobs:
         run: |
           echo "Checking Backend/htmlcov directory:"
           ls -la Backend/htmlcov/ || echo "htmlcov directory not found!"
+          echo "Checking .gitignore content:"
+          cat Backend/htmlcov/.gitignore || echo "No .gitignore found"
           echo "Files in htmlcov:"
           find Backend/htmlcov -type f || echo "No files found!"
 
@@ -55,3 +57,5 @@ jobs:
         with:
           folder: Backend/htmlcov
           branch: gh-pages
+          clean: true
+          force: true

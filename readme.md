@@ -24,7 +24,7 @@ After installation, log in with your Google account or email.
 
 6. Once connected, view the databases on `Mydb > Schemas > public > Tables > subtasks / tasks / users`
 
-## 4. Installation
+## 3. Installation
 
 1. `git clone https://github.com/Ollie-Edwards/Software-Engineering-Student-Stress.git`
 
@@ -32,6 +32,6 @@ After installation, log in with your Google account or email.
 
 3. Ensure docker desktop is installed and open
 
-## 5. Starting the application
+## 4. Starting the application
 
 Run: `.\start.bat` in the root directory to start the application

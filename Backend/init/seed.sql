@@ -1,0 +1,58 @@
+-- ===========================================
+-- seed.sql — Inserts sample data for Users, Tasks, SubTasks
+-- ===========================================
+
+-- ===========================================
+-- Users
+-- ===========================================
+INSERT INTO users (name, date_of_birth, task_preference)
+VALUES
+('Alice Johnson', '1990-04-12', 'importance_first'),
+('Bob Smith', '1985-10-30', 'shortest_first'),
+('Charlie Nguyen', '1998-07-19', 'easiest_first');
+
+-- ===========================================
+-- Tasks
+-- ===========================================
+-- Alice’s tasks (user_id = 1)
+INSERT INTO tasks (user_id, title, description, status, importance, length, tag_id, due_at)
+VALUES
+(1, 'Plan weekly schedule', 'Create a schedule for next week.', FALSE, 50, 60, 1, '2025-02-01 10:00'),
+(1, 'Buy groceries', 'Milk, eggs, vegetables.', TRUE, 20, 30, 2, '2025-01-30 17:00'),
+(1, 'Exercise', '30 minute morning routine.', FALSE, 40, 30, 3, '2025-01-29 07:00');
+
+-- Bob’s tasks (user_id = 2)
+INSERT INTO tasks (user_id, title, description, status, importance, length, tag_id, due_at)
+VALUES
+(2, 'Finish project report', 'Complete and submit the annual report.', FALSE, 90, 180, 4, '2025-02-02 12:00'),
+(2, 'Clean workspace', 'Organize desk and files.', TRUE, 15, 20, 5, NULL);
+
+-- Charlie’s tasks (user_id = 3)
+INSERT INTO tasks (user_id, title, description, status, importance, length, tag_id, due_at)
+VALUES
+(3, 'Study for exam', 'Study chapters 1–5.', FALSE, 75, 120, 6, '2025-02-10 09:00'),
+(3, 'Walk the dog', 'Evening walk around the block.', TRUE, 10, 20, 7, '2025-01-28 18:00');
+
+-- ===========================================
+-- SubTasks
+-- ===========================================
+-- Alice task_id = 1
+INSERT INTO subtasks (task_id, title, status, order_index)
+VALUES
+(1, 'Review last week', TRUE, 1),
+(1, 'Set goals for next week', FALSE, 2),
+(1, 'Assign time blocks', FALSE, 3);
+
+-- Bob: task_id = 4 
+INSERT INTO subtasks (task_id, title, status, order_index)
+VALUES
+(4, 'Write introduction', TRUE, 1),
+(4, 'Compile financial data', FALSE, 2),
+(4, 'Review with team', FALSE, 3);
+
+-- Charlie: task_id = 6
+INSERT INTO subtasks (task_id, title, status, order_index)
+VALUES
+(6, 'Read chapter 1', TRUE, 1),
+(6, 'Take notes on chapter 2', FALSE, 2),
+(6, 'Practice questions', FALSE, 3);

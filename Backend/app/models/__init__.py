@@ -1,3 +1,3 @@
-from .user import User
-from .task import Task
-from .subtask import Subtask
+from models.user import User
+from models.task import Task
+from models.subtask import Subtask

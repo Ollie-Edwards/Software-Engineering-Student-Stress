@@ -2,7 +2,7 @@
 
 See the most recent coverage report here:
 
-https://ollie-edwards.github.io/Software-Engineering-Student-Stress
+https://ollie-edwards.github.io/Software-Engineering-Student-Stress/index.html
 
 # Get Started
 

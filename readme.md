@@ -1,3 +1,9 @@
+# Testing and Coverage report
+
+See the most recent coverage report here:
+
+https://ollie-edwards.github.io/Software-Engineering-Student-Stress
+
 # Get Started
 
 Follow these steps to set up the project locally.

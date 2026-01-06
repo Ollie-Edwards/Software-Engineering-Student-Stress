@@ -26,15 +26,7 @@ while True:
 
 Base.metadata.create_all(bind=engine)
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Starting up...")
-    yield
-    print("Shutting down...")
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 @app.get("/")
@@ -45,13 +37,13 @@ async def root():
 class TaskResponse(BaseModel):
     id: int
     user_id: int
-    title: str
-    description: Optional[str] = None
-    status: bool
-    importance: int
-    length: Optional[int] = None
-    tag_id: Optional[int] = None
-    due_at: Optional[datetime] = None
+    title: str # The title of the task
+    description: Optional[str] = None # A short description of the task
+    status: bool # Whether or not the task is complete
+    importance: int # How important the task is (scale from 1-10)
+    length: Optional[int] = None # How many minuites this will take (<5 - 180)
+    tags: Optional[str] = None # A list of string tags
+    due_at: Optional[datetime] = None # The date that this must be completed by 
     created_at: datetime
     updated_at: datetime
 
@@ -67,3 +59,4 @@ class TaskResponse(BaseModel):
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks
+

@@ -2,7 +2,7 @@
 -- schema.sql — Creates User, Task, SubTask
 -- ===========================================
 
--- Drop tables (dev only)
+-- For development only (Will delete all existing data)
 DROP TABLE IF EXISTS subtasks CASCADE;
 DROP TABLE IF EXISTS tasks CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
@@ -21,9 +21,9 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
-    task_preference task_preference_enum DEFAULT 'importance_first',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    task_preference task_preference_enum NOT NULL DEFAULT 'importance_first',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ===========================================
@@ -35,14 +35,14 @@ CREATE TABLE tasks (
     
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    status BOOLEAN NOT NULL,
-    importance SMALLINT NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 100),
-    length INTEGER,
-    tag_id INTEGER,
+    completed BOOLEAN NOT NULL DEFAULT false,
+    importance SMALLINT UNSIGNED NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
+    length SMALLINT UNSIGNED NOT NULL DEFAULT 0 CHECK (length BETWEEN 0 AND 300),
+    tags VARCHAR(50)[] DEFAULT '{}',
     due_at TIMESTAMP,
 
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_task_user
         FOREIGN KEY (user_id)
@@ -50,7 +50,6 @@ CREATE TABLE tasks (
         ON DELETE CASCADE
 );
 
--- all tasks belonging to one user
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
 
 -- ===========================================
@@ -62,10 +61,10 @@ CREATE TABLE subtasks (
 
     title VARCHAR(255) NOT NULL,
     status BOOLEAN NOT NULL,
-    order_index INTEGER,
+    order_index INTEGER NOT NULL,
 
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_subtask_task
         FOREIGN KEY (task_id)
@@ -73,5 +72,4 @@ CREATE TABLE subtasks (
         ON DELETE CASCADE
 );
 
--- Index to speed up “get subtasks for task”
 CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);

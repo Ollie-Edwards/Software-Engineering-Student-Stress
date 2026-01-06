@@ -35,7 +35,7 @@ export default function Home() {
             <h2 className="text-xl font-semibold">{task.title}</h2>
             <p className="text-gray-700">{task.description}</p>
             <p className="mt-2">
-              <strong>Status:</strong> {task.status ? "Completed" : "Pending"}
+              <strong>Status:</strong> {task.status ? "Completed" : "Not Completed"}
             </p>
             <p>
               <strong>Importance:</strong> {task.importance}

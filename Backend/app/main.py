@@ -39,10 +39,10 @@ class TaskResponse(BaseModel):
     user_id: int
     title: str # The title of the task
     description: Optional[str] = None # A short description of the task
-    status: bool # Whether or not the task is complete
+    completed: bool # Whether or not the task is complete
     importance: int # How important the task is (scale from 1-10)
-    length: Optional[int] = None # How many minuites this will take (<5 - 180)
-    tags: Optional[str] = None # A list of string tags
+    length: int # How many minuites this will take (<5 - 300)
+    tags: List[str] = [] # A list of string tags (can be []). No longer than 50 chars per tag
     due_at: Optional[datetime] = None # The date that this must be completed by 
     created_at: datetime
     updated_at: datetime

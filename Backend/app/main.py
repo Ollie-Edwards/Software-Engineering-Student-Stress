@@ -15,6 +15,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
+from priorityScoring import default_priority_scoring
+
 engine = create_engine(DATABASE_URL)
 while True:
     try:
@@ -59,6 +61,27 @@ class TaskResponse(BaseModel):
     summary="Retrieve all tasks",
     description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
 )
+
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
-    return tasks
+    task_list = []
+
+    for task in tasks:
+        score = default_priority_scoring(task)
+
+        task_dict = dict(
+            id=task.id,
+            user_id=task.user_id,
+            title=task.title,
+            completed=task.completed,
+            importance=task.importance,
+            length=task.length,
+            due_at=task.due_at,
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+            priority=score
+        )
+        task_list.append(task_dict)
+        print(task_dict)
+
+    return task_list

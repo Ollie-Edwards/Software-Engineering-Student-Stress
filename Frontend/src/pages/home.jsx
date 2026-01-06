@@ -3,13 +3,13 @@ import React, { useEffect, useState } from "react";
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function fetchTasks() {
       try {
         const res = await fetch("http://localhost:8000/tasks");
-        if (!res.ok) throw new Error("Failed to fetch tasks");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setTasks(data);
       } catch (err) {
@@ -30,31 +30,16 @@ export default function Home() {
       <h1 className="text-2xl font-bold">Tasks</h1>
       {tasks.length === 0 && <p>No tasks found.</p>}
       <div className="grid gap-4">
-        {tasks.map((task) => (
+        {tasks.map(task => (
           <div key={task.id} className="p-4 border rounded-xl shadow-sm">
             <h2 className="text-xl font-semibold">{task.title}</h2>
             <p className="text-gray-700">{task.description}</p>
-            <p className="mt-2">
-              <strong>Status:</strong> {task.status ? "Completed" : "Not Completed"}
-            </p>
-            <p>
-              <strong>Importance:</strong> {task.importance}
-            </p>
-            <p>
-              <strong>Length:</strong> {task.length}
-            </p>
-            <p>
-              <strong>Tag ID:</strong> {task.tag_id}
-            </p>
-            <p>
-              <strong>Due At:</strong> {new Date(task.due_at).toLocaleString()}
-            </p>
-            <p>
-              <strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}
-            </p>
-            <p>
-              <strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}
-            </p>
+            <p><strong>Status:</strong> {task.completed ? "Completed" : "Not Completed"}</p>
+            <p><strong>Importance:</strong> {task.importance}</p>
+            <p><strong>Length:</strong> {task.length}</p>
+            <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
+            <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
+            <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
           </div>
         ))}
       </div>

@@ -36,8 +36,8 @@ CREATE TABLE tasks (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     completed BOOLEAN NOT NULL DEFAULT false,
-    importance SMALLINT UNSIGNED NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
-    length SMALLINT UNSIGNED NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
+    importance SMALLINT NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
+    length SMALLINT NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
     tags VARCHAR(50)[] DEFAULT '{}',
     due_at TIMESTAMP,
 

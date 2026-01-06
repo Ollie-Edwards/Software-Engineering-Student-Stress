@@ -23,10 +23,10 @@ class Task(Base):
 
     title = Column(String(255), nullable=False)
     description = Column(Text)
-    status = Column(Boolean, nullable=False)
+    completed = Column(Boolean, nullable=False)
     importance = Column(SmallInteger, default=0)
     length = Column(Integer)
-    tag_id = Column(Integer)
+    tags = Column(Integer)
     due_at = Column(TIMESTAMP)
 
     created_at = Column(TIMESTAMP, server_default=func.now())

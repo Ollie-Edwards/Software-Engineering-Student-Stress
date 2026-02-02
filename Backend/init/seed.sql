@@ -14,24 +14,24 @@ VALUES
 -- ===========================================
 -- Tasks
 -- ===========================================
--- Alice’s tasks (user_id = 1)
+-- Alice's tasks (user_id = 1)
 INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at)
 VALUES
-(1, 'Plan weekly schedule', 'Create a schedule for next week.', FALSE, 5, 60, ARRAY['planning','weekly'], '2025-02-01 10:00'),
-(1, 'Buy groceries', 'Milk, eggs, vegetables.', TRUE, 2, 30, ARRAY['shopping','errands'], '2025-01-30 17:00'),
-(1, 'Exercise', '30 minute morning routine.', FALSE, 4, 30, ARRAY['health','fitness'], '2025-01-29 07:00');
+(1, 'Plan weekly schedule', 'Create a schedule for next week.', FALSE, 5, 60, ARRAY['planning','weekly'], '2026-02-05 10:00'),
+(1, 'Buy groceries', 'Milk, eggs, vegetables.', TRUE, 2, 30, ARRAY['shopping','errands'], '2026-02-04 17:00'),
+(1, 'Exercise', '30 minute morning routine.', FALSE, 4, 30, ARRAY['health','fitness'], '2026-02-01 07:00');
 
--- Bob’s tasks (user_id = 2)
+-- Bob's tasks (user_id = 2)
 INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at)
 VALUES
-(2, 'Finish project report', 'Complete and submit the annual report.', FALSE, 9, 180, ARRAY['work','report'], '2025-02-02 12:00'),
-(2, 'Clean workspace', 'Organize desk and files.', TRUE, 1, 20, ARRAY['cleaning','organization'], NULL);
+(2, 'Finish project report', 'Complete and submit the annual report.', FALSE, 9, 180, ARRAY['work','report'], '2026-02-07 12:00'),
+(2, 'Clean workspace', 'Organize desk and files.', TRUE, 1, 20, ARRAY['cleaning','organization'], '2026-02-03 12:00');
 
--- Charlie’s tasks (user_id = 3)
+-- Charlie's tasks (user_id = 3)
 INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at)
 VALUES
-(3, 'Study for exam', 'Study chapters 1–5.', FALSE, 7, 120, ARRAY['study','exam'], '2025-02-10 09:00'),
-(3, 'Walk the dog', 'Evening walk around the block.', TRUE, 1, 20, ARRAY['pet','exercise'], '2025-01-28 18:00');
+(3, 'Study for exam', 'Study chapters 1–5.', FALSE, 7, 120, ARRAY['study','exam'], '2026-02-08 09:00'),
+(3, 'Walk the dog', 'Evening walk around the block.', TRUE, 1, 20, ARRAY['pet','exercise'], '2025-02-06 18:00');
 
 -- ===========================================
 -- SubTasks

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-export default function Home() {
+export default function Home({isAdding, setIsAdding}) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
-  useEffect(() => {
+    useEffect(() => {
     async function fetchTasks() {
       try {
         const res = await fetch("http://localhost:8000/tasks");
@@ -27,22 +28,184 @@ export default function Home() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">Tasks</h1>
+      <div className="flex justify-between items-end mb-8">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
+        <p className="text-slate-500 mt-1">
+          You have <span className="font-semibold text-indigo-600">{tasks.length}</span> tasks remaining.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
+        <span className="text-xs font-bold text-slate-400 uppercase">Sort By</span>
+        <select className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer">
+          <option> Priority Level</option>
+        </select>
+      </div>
+      </div>
+      
       {tasks.length === 0 && <p>No tasks found.</p>}
       <div className="grid gap-4">
-        {tasks.map(task => (
-          <div key={task.id} className="p-4 border rounded-xl shadow-sm">
-            <h2 className="text-xl font-semibold">{task.title}</h2>
-            <p className="text-gray-700">{task.description}</p>
-            <p><strong>Status:</strong> {task.completed ? "Completed" : "Not Completed"}</p>
-            <p><strong>Importance:</strong> {task.importance}</p>
-            <p><strong>Length:</strong> {task.length}</p>
-            <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
-            <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
-            <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+        {[...tasks]
+          .sort((a, b) => b.importance - a.importance)
+          .map(task => {
+          {/* High (8-10), Medium (4-7), Low (1-3)*/}
+          const isHigh = task.importance >= 8;
+          const isMedium = task.importance >= 4 && task.importance < 8;
+
+          const barColor = isHigh ? 'bg-red-500' : isMedium ? 'bg-amber-400' : 'bg-emerald-500';
+          const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
+          const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
+          const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+
+          return(
+          <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
+            <div className={`w-2 shrink-0 ${barColor}`} />
+            <div className="p-5 flex-1 flex flex-col gap-3">
+              {/* Title */}
+              <div className ="flex justify-between items-start">
+                <div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block ${badgeBg} ${badgeText}`}>
+                    • {priorityLabel} ({task.importance})
+                  </span>
+                  <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
+                </div>
+                <button onClick={(e) => e.stopPropagation()} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>  
+              </div>
+
+              {/* Description */}
+              <p className="text-slate-600 text-sm line-clamp-2">{task.description}</p>
+
+              {/* Detail info */}
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4 pt-4 border-t mt-auto text-xs text-slate-500">
+                <p><strong>Status:</strong> {task.completed ? "Completed" : "Not Completed"}</p>
+                <p><strong>Importance:</strong> {task.importance}</p>
+                <p><strong>Length:</strong> {task.length}</p>
+                <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
+                <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
+                <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+              </div>
           </div>
-        ))}
+          </div>
+          )
+        })}
       </div>
+      {editingTask && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">Edit Task</h2>
+                <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+      
+            <form className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
+                <input required
+                  className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  defaultValue={editingTask.title} 
+                />
+              </div>
+        
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
+              <textarea 
+                className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
+                defaultValue={editingTask.description} 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
+                <input name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length (e.g. 30m)</label>
+                <input name="length" defaultValue={editingTask.length} className="w-full border rounded-xl px-4 py-2 outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Due Date</label>
+              <input name="due_at" type="datetime-local" defaultValue={editingTask.due_at ? editingTask.due_at.substring(0, 16) : ""} className="w-full border rounded-xl px-4 py-2 outline-none" />
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+              <input name="completed" type="checkbox" defaultChecked={editingTask.completed} className="w-5 h-5 accent-indigo-600" />
+              <span className="text-sm font-semibold text-slate-700">Mark as Completed</span>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button 
+                type="button"
+                onClick={() => setEditingTask(null)}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+              >
+                Save Changes
+              </button>
+            </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isAdding && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center bg-indigo-50">
+              <h2 className="text-xl font-bold text-slate-800">Create New Task</h2>
+              <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+      
+            <form className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
+                <input name="title" required placeholder="Title" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
+                <textarea name="description" placeholder="Add some details..." className="w-full border rounded-xl px-4 py-2 h-20 outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Due Date & Time
+                </label>
+              <input name="due_at" type="datetime-local" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
+                  <input name="importance" required type="number" min="1" max="10" placeholder="5" className="w-full border rounded-xl px-4 py-2 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length</label>
+                  <input name="length" type="number" min="0" placeholder="30" className="w-full border rounded-xl px-4 py-2 outline-none" />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setIsAdding(false)} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-200">Create Task</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

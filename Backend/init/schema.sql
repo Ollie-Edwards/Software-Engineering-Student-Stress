@@ -52,9 +52,9 @@ CREATE TABLE tasks (
     user_id INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    completed BOOLEAN NOT NULL DEFAULT false,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
     importance SMALLINT NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
-    length SMALLINT NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
+    LENGTH SMALLINT NOT NULL DEFAULT 0 CHECK (LENGTH BETWEEN 5 AND 300),
     tags VARCHAR(50) [] DEFAULT '{}',
     due_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -86,11 +86,11 @@ CREATE INDEX idx_subtasks_task_id ON subtasks (task_id);
 CREATE TABLE reminders (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
-    status BOOLEAN NOT NULL DEFAULT false,
+    status BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    remind_at TIMESTAMP NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT true,
+    remind_at TIMESTAMP NOT NULL, -- check after today
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_reminder_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
 );
 
@@ -123,6 +123,10 @@ BEGIN
         NEW.remind_at := v_due_at - v_task_reminder_interval;
     END IF;
 
+    IF NEW.remind_at < NOW() THEN
+        RAISE EXCEPTION 'Cannot create reminder: reminder date must be in the future';
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -140,7 +144,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id INTEGER NOT NULL,
     message TEXT NOT NULL,
     scheduled_at TIMESTAMP NOT NULL,
-    delivered BOOLEAN NOT NULL DEFAULT false,
+    delivered BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

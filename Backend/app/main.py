@@ -65,31 +65,31 @@ def get_tasks(db: Session = Depends(get_db)):
 
 # marking a task as complete
 @app.post("/tasks/{task_id}/complete")
-def complete_task(task_id: int, db: Session=Depends(get_db), complete_subtasks: bool=False):
+def complete_task(task_id: int, db: Session=Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
+    current_time = datetime.now(timezone.utc)
 
     task.completed = True
-    task.completed_at = datetime.now(timezone.utc)
+    task.completed_at = current_time
 
-    if complete_subtasks:
-        for subtask in task.subtasks:
-            subtask.completed = True
-            subtask.completed_at = datetime.now(timezone.utc)
+    for subtask in task.subtasks:
+        subtask.completed = True
+        subtask.completed_at = current_time
 
-    db.commit
+    db.commit()
     db.refresh(task)
     
     return {"message": "Task completed"}
 
 # marking a subtask as complete
 @app.post("/subtasks/{subtask_id}/complete")
-def complete_task(subtask_id: int, db: Session=Depends(get_db)):
+def complete_subtask(subtask_id: int, db: Session=Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
 
     subtask.completed = True
     subtask.completed_at = datetime.now(timezone.utc)
 
-    db.commit
+    db.commit()
     db.refresh(subtask)
     
     return {"message": "Subtask completed"}
@@ -117,7 +117,7 @@ def reopen_subtask(subtask_id: int, db: Session=Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
 
     subtask.completed = False
-    subtask.compile_at = None
+    subtask.completed_at = None
 
     db.commit()
     db.refresh(subtask)

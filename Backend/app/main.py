@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -62,3 +62,64 @@ class TaskResponse(BaseModel):
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks
+
+# marking a task as complete
+@app.post("/tasks/{task_id}/complete")
+def complete_task(task_id: int, db: Session=Depends(get_db), complete_subtasks: bool=False):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    task.completed = True
+    task.completed_at = datetime.now(timezone.utc)
+
+    if complete_subtasks:
+        for subtask in task.subtasks:
+            subtask.completed = True
+            subtask.completed_at = datetime.now(timezone.utc)
+
+    db.commit
+    db.refresh(task)
+    
+    return {"message": "Task completed"}
+
+# marking a subtask as complete
+@app.post("/subtasks/{subtask_id}/complete")
+def complete_task(subtask_id: int, db: Session=Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    subtask.completed = True
+    subtask.completed_at = datetime.now(timezone.utc)
+
+    db.commit
+    db.refresh(subtask)
+    
+    return {"message": "Subtask completed"}
+
+# reopen a task
+@app.post("/tasks/{task_id}/reopen")
+def reopen_task(task_id: int, db: Session=Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    task.completed = False
+    task.completed_at = None
+
+    for subtask in task.subtasks:
+        subtask.completed = False
+        subtask.completed_at = None
+
+    db.commit()
+    db.refresh(task)
+
+    return {"message": "Task reopened"}
+
+# reopen a subtask
+@app.post("/subtasks/{subtask_id}/reopen")
+def reopen_subtask(subtask_id: int, db: Session=Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    subtask.completed = False
+    subtask.compile_at = None
+
+    db.commit()
+    db.refresh(subtask)
+
+    return {"message": "Subtask reopened"}

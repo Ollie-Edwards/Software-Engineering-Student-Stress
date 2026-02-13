@@ -31,6 +31,7 @@ class Task(Base):
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    completed_at = Column(TIMESTAMP, nullable=True)
 
     user = relationship("User", backref="tasks")
     subtasks = relationship("Subtask", back_populates="task")

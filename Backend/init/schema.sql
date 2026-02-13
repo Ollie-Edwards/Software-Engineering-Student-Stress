@@ -43,6 +43,7 @@ CREATE TABLE tasks (
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_task_user
         FOREIGN KEY (user_id)

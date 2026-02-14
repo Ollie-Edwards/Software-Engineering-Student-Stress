@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -63,10 +63,15 @@ def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks
 
-# marking a task as complete
+
+# Marking a task as complete
 @app.post("/tasks/{task_id}/complete")
-def complete_task(task_id: int, db: Session=Depends(get_db)):
+def complete_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
     current_time = datetime.now(timezone.utc)
 
     task.completed = True
@@ -78,26 +83,42 @@ def complete_task(task_id: int, db: Session=Depends(get_db)):
 
     db.commit()
     db.refresh(task)
-    
+
     return {"message": "Task completed"}
 
-# marking a subtask as complete
+
+# Marking a subtask as complete
 @app.post("/subtasks/{subtask_id}/complete")
-def complete_subtask(subtask_id: int, db: Session=Depends(get_db)):
+def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    parent_task = subtask.task
+    current_time = datetime.now(timezone.utc)
+
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
 
     subtask.completed = True
-    subtask.completed_at = datetime.now(timezone.utc)
+    subtask.completed_at = current_time
+
+    # If all subtasks of the parent task is complete, mark parent task as complete
+    if all(st.completed for st in parent_task.subtasks):
+        parent_task.completed = True
+        parent_task.completed_at = current_time
 
     db.commit()
     db.refresh(subtask)
-    
+
     return {"message": "Subtask completed"}
 
-# reopen a task
+
+# Reopen a task
 @app.post("/tasks/{task_id}/reopen")
-def reopen_task(task_id: int, db: Session=Depends(get_db)):
+def reopen_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
 
     task.completed = False
     task.completed_at = None
@@ -111,10 +132,14 @@ def reopen_task(task_id: int, db: Session=Depends(get_db)):
 
     return {"message": "Task reopened"}
 
-# reopen a subtask
+
+# Reopen a subtask
 @app.post("/subtasks/{subtask_id}/reopen")
-def reopen_subtask(subtask_id: int, db: Session=Depends(get_db)):
+def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
 
     subtask.completed = False
     subtask.completed_at = None

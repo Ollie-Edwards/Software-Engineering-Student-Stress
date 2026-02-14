@@ -71,7 +71,7 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     current_time = datetime.now(timezone.utc)
 
     task.completed = True
@@ -93,7 +93,6 @@ def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
     parent_task = subtask.task
     current_time = datetime.now(timezone.utc)
-
 
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")

@@ -62,3 +62,112 @@ class TaskResponse(BaseModel):
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     return tasks
+
+
+# ----------------- SUBSTACK CRUD ------------------------------------------------------------------------
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from models.task import Task
+from models.subtask import Subtask
+from database import get_db
+
+
+class SubtaskCreate(BaseModel):
+    title: str
+    status: bool = False
+    order_index: Optional[int] = None
+
+
+class SubtaskUpdate(BaseModel):
+    title: Optional[str] = None
+    status: Optional[bool] = None
+    order_index: Optional[int] = None
+
+
+class SubtaskResponse(BaseModel):
+    id: int
+    task_id: int
+    title: str
+    status: bool
+    order_index: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+@app.get("/tasks/{task_id}/subtasks", response_model=List[SubtaskResponse])
+def list_subtasks(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return (
+        db.query(Subtask)
+        .filter(Subtask.task_id == task_id)
+        .order_by(Subtask.order_index.is_(None), Subtask.order_index, Subtask.id)
+        .all()
+    )
+
+
+@app.post(
+    "/tasks/{task_id}/subtasks",
+    response_model=SubtaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_subtask(task_id: int, payload: SubtaskCreate, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    subtask = Subtask(
+        task_id=task_id,
+        title=payload.title,
+        status=payload.status,
+        order_index=payload.order_index,
+    )
+    db.add(subtask)
+    db.commit()
+    db.refresh(subtask)
+    return subtask
+
+
+@app.get("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    if not subtask:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+    return subtask
+
+
+@app.put("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+def update_subtask(subtask_id: int, payload: SubtaskUpdate, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    if not subtask:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    if payload.title is not None:
+        subtask.title = payload.title
+    if payload.status is not None:
+        subtask.status = payload.status
+    if payload.order_index is not None:
+        subtask.order_index = payload.order_index
+
+    db.commit()
+    db.refresh(subtask)
+    return subtask
+
+
+@app.delete("/subtasks/{subtask_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    if not subtask:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    db.delete(subtask)
+    db.commit()
+    return None

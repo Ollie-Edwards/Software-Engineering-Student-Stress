@@ -49,7 +49,7 @@ class TaskResponse(BaseModel):
         []
     )  # A list of string tags (can be []). No longer than 50 chars per tag
     due_at: datetime  # The date that this must be completed by
-    priority: float # Determines the task priority score
+    priority: float  # Determines the task priority score
     created_at: datetime
     updated_at: datetime
 
@@ -62,11 +62,10 @@ class TaskResponse(BaseModel):
     summary="Retrieve all tasks",
     description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
 )
-
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
-    
+
     for task in tasks:
         task.priority = scoreTask(task)
-    
+
     return tasks

@@ -34,9 +34,11 @@ After installation, log in with your Google account or email.
 
 1. `git clone https://github.com/Ollie-Edwards/Software-Engineering-Student-Stress.git`
 
-2. `cd .\Software-Engineering-Student-Stress\`
+2. Install NPM and Node.js from https://nodejs.org/en
 
-3. Ensure docker desktop is installed and open
+3. `cd .\Software-Engineering-Student-Stress\`
+
+4. Ensure docker desktop is installed and open
 
 ## 4. Starting the application
 

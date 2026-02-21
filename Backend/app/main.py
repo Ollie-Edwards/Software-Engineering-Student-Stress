@@ -15,6 +15,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
+from priorityScoring import scoreTask
+
 engine = create_engine(DATABASE_URL)
 while True:
     try:
@@ -46,7 +48,8 @@ class TaskResponse(BaseModel):
     tags: List[str] = (
         []
     )  # A list of string tags (can be []). No longer than 50 chars per tag
-    due_at: Optional[datetime] = None  # The date that this must be completed by
+    due_at: datetime  # The date that this must be completed by
+    priority: float  # Determines the task priority score
     created_at: datetime
     updated_at: datetime
 
@@ -61,6 +64,10 @@ class TaskResponse(BaseModel):
 )
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
+
+    for task in tasks:
+        task.priority = scoreTask(task)
+
     return tasks
 
 

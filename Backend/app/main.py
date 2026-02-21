@@ -151,20 +151,20 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
 @app.post("/subtasks/{subtask_id}/reopen")
 def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
-    task = subtask.task
+    parent_task = subtask.task
 
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
-    if not task.completed:
+    if not subtask.completed:
         raise HTTPException(status_code=400, detail="Subtask already open")
 
     subtask.completed = False
     subtask.completed_at = None
 
-    if task.completed:
-        subtask.completed = False
-        subtask.completed_at = None
+    if parent_task.completed:
+        parent_task.completed = False
+        parent_task.completed_at = None
 
     db.commit()
     db.refresh(subtask)

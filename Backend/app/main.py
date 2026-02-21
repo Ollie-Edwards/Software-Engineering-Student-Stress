@@ -72,6 +72,9 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    if task.completed:
+        raise HTTPException(status_code=400, detail="Task is already completed")
+
     current_time = datetime.now(timezone.utc)
 
     task.completed = True
@@ -84,7 +87,8 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(task)
 
-    return {"message": "Task completed"}
+    if task.completed:
+        return {"message": "Task completed"}
 
 
 # Marking a subtask as complete
@@ -97,6 +101,9 @@ def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
+    if subtask.completed:
+        raise HTTPException(status_code=400, detail="Subtask is already completed")
+
     subtask.completed = True
     subtask.completed_at = current_time
 
@@ -108,7 +115,8 @@ def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(subtask)
 
-    return {"message": "Subtask completed"}
+    if subtask.completed:
+        return {"message": "Subtask completed"}
 
 
 # Reopen a task
@@ -119,31 +127,40 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    if not task.completed:
+        raise HTTPException(status_code=400, detail="Task already open")
+
     task.completed = False
     task.completed_at = None
-
-    for subtask in task.subtasks:
-        subtask.completed = False
-        subtask.completed_at = None
 
     db.commit()
     db.refresh(task)
 
-    return {"message": "Task reopened"}
+    if not task.completed:
+        return {"message": "Task reopened"}
 
 
 # Reopen a subtask
 @app.post("/subtasks/{subtask_id}/reopen")
 def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    task = subtask.task
 
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
+    if not task.completed:
+        raise HTTPException(status_code=400, detail="Subtask already open")
+
     subtask.completed = False
     subtask.completed_at = None
+
+    if task.completed:
+        subtask.completed = False
+        subtask.completed_at = None
 
     db.commit()
     db.refresh(subtask)
 
-    return {"message": "Subtask reopened"}
+    if not subtask.completed:
+        return {"message": "Subtask reopened"}

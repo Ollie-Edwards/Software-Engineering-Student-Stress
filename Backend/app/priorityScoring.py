@@ -9,18 +9,22 @@ def clamp(x, lo, hi):
 def scoreTask(task, urgencyHorizon=6.0, typicalDuration=1.0, emergencyBuffer=1.1):
     """
     Args:
-        task.importance: User rating 1-10
-        durationHours: Estimated time to complete in hours
-        hoursUntilDue: Hours remaining until deadline
-        urgencyHorizon: Hours at which urgency starts ramping
-        typicalDuration: Reference point for "short" tasks
-        emergencyBuffer: Multiplier for emergency threshold (default 1.1)
-            if hoursUntilDue <= durationHours * emergencyBuffer, then we set priority to 100
+        Task
+            task.importance: User rating 1-10
+            task.completed:  Boolean, if the task is completed
+            task.length:     Estimated time to complete in minuites
+            task.due_at:     Datetime in which the task is due
+
+        Optional Args:
+            urgencyHorizon: Hours at which urgency starts ramping
+            typicalDuration: Reference point for "short" tasks
+            emergencyBuffer: Multiplier for emergency threshold (default 1.1)
+                if hoursUntilDue <= durationHours * emergencyBuffer, then we set priority to 100
     """
     # Style parameters
     weightImportance = 0.65
     weightUrgency = 0.30
-    weightShortness = 0.05
+    weightShortness = 0.25
     antiStarvation = 0.7
 
     durationHours = max(task.length / 60, 0.01)

@@ -16,14 +16,18 @@ def make_task(importance=5, length=60, due_in_hours=24, completed=False):
 
 # --- clamp tests ---
 
+
 def test_clamp_within_range():
     assert clamp(5, 0, 10) == 5
+
 
 def test_clamp_below_lo():
     assert clamp(-1, 0, 10) == 0
 
+
 def test_clamp_above_hi():
     assert clamp(15, 0, 10) == 10
+
 
 def test_clamp_at_boundaries():
     assert clamp(0, 0, 10) == 0
@@ -31,6 +35,7 @@ def test_clamp_at_boundaries():
 
 
 # --- scoreTask tests ---
+
 
 def test_completed_task_returns_zero():
     task = make_task(completed=True)

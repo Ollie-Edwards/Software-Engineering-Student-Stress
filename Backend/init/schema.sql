@@ -35,7 +35,7 @@ CREATE TABLE tasks (
     
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    completed BOOLEAN NOT NULL DEFAULT false,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
     importance SMALLINT NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
     length SMALLINT NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
     tags VARCHAR(50)[] DEFAULT '{}',
@@ -43,6 +43,7 @@ CREATE TABLE tasks (
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_task_user
         FOREIGN KEY (user_id)
@@ -60,11 +61,12 @@ CREATE TABLE subtasks (
     task_id INTEGER NOT NULL,
 
     title VARCHAR(255) NOT NULL,
-    status BOOLEAN NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
     order_index INTEGER NOT NULL,
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_subtask_task
         FOREIGN KEY (task_id)

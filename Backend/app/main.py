@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -69,3 +69,105 @@ def get_tasks(db: Session = Depends(get_db)):
         task.priority = scoreTask(task)
 
     return tasks
+
+
+# Marking a task as complete
+@app.post("/tasks/{task_id}/complete")
+def complete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if task.completed:
+        raise HTTPException(status_code=400, detail="Task is already completed")
+
+    current_time = datetime.now(timezone.utc)
+
+    task.completed = True
+    task.completed_at = current_time
+
+    for subtask in task.subtasks:
+        subtask.completed = True
+        subtask.completed_at = current_time
+
+    db.commit()
+    db.refresh(task)
+
+    if task.completed:
+        return {"message": "Task completed"}
+
+
+# Marking a subtask as complete
+@app.post("/subtasks/{subtask_id}/complete")
+def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    parent_task = subtask.task
+    current_time = datetime.now(timezone.utc)
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    if subtask.completed:
+        raise HTTPException(status_code=400, detail="Subtask is already completed")
+
+    subtask.completed = True
+    subtask.completed_at = current_time
+
+    # If all subtasks of the parent task is complete, mark parent task as complete
+    if all(st.completed for st in parent_task.subtasks):
+        parent_task.completed = True
+        parent_task.completed_at = current_time
+
+    db.commit()
+    db.refresh(subtask)
+
+    if subtask.completed:
+        return {"message": "Subtask completed"}
+
+
+# Reopen a task
+@app.post("/tasks/{task_id}/reopen")
+def reopen_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if not task.completed:
+        raise HTTPException(status_code=400, detail="Task already open")
+
+    task.completed = False
+    task.completed_at = None
+
+    db.commit()
+    db.refresh(task)
+
+    if not task.completed:
+        return {"message": "Task reopened"}
+
+
+# Reopen a subtask
+@app.post("/subtasks/{subtask_id}/reopen")
+def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    parent_task = subtask.task
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    if not subtask.completed:
+        raise HTTPException(status_code=400, detail="Subtask already open")
+
+    subtask.completed = False
+    subtask.completed_at = None
+
+    if parent_task.completed:
+        parent_task.completed = False
+        parent_task.completed_at = None
+
+    db.commit()
+    db.refresh(subtask)
+
+    if not subtask.completed:
+        return {"message": "Subtask reopened"}

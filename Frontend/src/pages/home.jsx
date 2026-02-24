@@ -5,6 +5,9 @@ export default function Home({isAdding, setIsAdding}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const uncompletedTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+  const [sortOrder, setSortOrder] = useState("desc");
 
     useEffect(() => {
     async function fetchTasks() {
@@ -26,30 +29,8 @@ export default function Home({isAdding, setIsAdding}) {
   if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
 
-  return (
-    <div className="p-6 space-y-4">
-      <div className="flex justify-between items-end mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
-        <p className="text-slate-500 mt-1">
-          You have <span className="font-semibold text-indigo-600">{tasks.length}</span> tasks remaining.
-        </p>
-      </div>
-
-      <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
-        <span className="text-xs font-bold text-slate-400 uppercase">Sort By</span>
-        <select className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer">
-          <option> Priority Level</option>
-        </select>
-      </div>
-      </div>
-      
-      {tasks.length === 0 && <p>No tasks found.</p>}
-      <div className="grid gap-4">
-        {[...tasks]
-          .sort((a, b) => b.importance - a.importance)
-          .map(task => {
-          {/* High (8-10), Medium (4-7), Low (1-3)*/}
+  const Taskcard = (task) => {
+    {/* High (8-10), Medium (4-7), Low (1-3)*/}
           const isHigh = task.importance >= 8;
           const isMedium = task.importance >= 4 && task.importance < 8;
 
@@ -57,6 +38,8 @@ export default function Home({isAdding, setIsAdding}) {
           const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
           const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
           const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+
+          const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
           return(
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
@@ -70,11 +53,24 @@ export default function Home({isAdding, setIsAdding}) {
                   </span>
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
+                <div className="flex items-center gap-1">
+                <button onClick={toggleReminder} className={`p-2 transition-all rounded-lg ${task.reminder ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  {task.reminder ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-slate-400">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                  )}
+                </button>
                 <button onClick={(e) => e.stopPropagation()} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>  
+                </div>
               </div>
 
               {/* Description */}
@@ -92,8 +88,56 @@ export default function Home({isAdding, setIsAdding}) {
           </div>
           </div>
           )
-        })}
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex justify-between items-end mb-8">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
+        <p className="text-slate-500 mt-1">
+          You have <span className="font-semibold text-indigo-600">{uncompletedTasks.length}</span> tasks remaining.
+        </p>
       </div>
+
+      <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
+        <span className="text-xs font-bold text-slate-400 uppercase">Sort By</span>
+        <select className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer" value = {sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+          <option value="desc">Highest to Lowest priority</option>
+          <option value="asc">Lowest to Highest priority</option>
+        </select>
+      </div>
+      </div>
+      
+      {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
+      <div className="grid gap-4">
+        {[...uncompletedTasks]
+          .sort((a, b) => {
+            return sortOrder === "desc" 
+              ? b.importance - a.importance
+              : a.importance - b.importance;
+          })
+          .map(task => Taskcard(task))}
+      </div>  
+
+      {completedTasks.length > 0 && (
+        <div className="mt-12 space-y-4 pt-8 border-t border-dashed">
+          <h1 className="text-3xl font-bold text-slate-900">Completed</h1>
+          <p className="text-slate-500 mt-1">
+            You have completed <span className="font-semibold text-indigo-600">{completedTasks.length}</span> tasks.
+          </p>
+          <div className="grid gap-4"> 
+            {[...completedTasks]
+              .sort((a, b) => {
+                return sortOrder === "desc" 
+                  ? b.importance - a.importance
+                  : a.importance - b.importance;
+              })
+              .map(task => Taskcard(task))}
+          </div>
+        </div>
+      )}
+
       {editingTask && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -205,7 +249,7 @@ export default function Home({isAdding, setIsAdding}) {
           </div>
         </div>
       )}
-
+  
     </div>
   );
 }

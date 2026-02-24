@@ -7,7 +7,7 @@ from sqlalchemy import (
     SmallInteger,
     TIMESTAMP,
     ForeignKey,
-    JSON
+    JSON,
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship

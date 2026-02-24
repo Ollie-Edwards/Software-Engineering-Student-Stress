@@ -288,3 +288,32 @@ def test_reopen_missing_subtask(client):
     response = client.post(f"/subtasks/234/reopen")
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
+
+
+def test_reopen_subtask_reopens_parent_task(client, db, task_factory, subtask_factory):
+    task = task_factory(completed=True)
+
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+
+    subtask = subtask_factory(task, completed=True)
+
+    db.add(subtask)
+    db.commit()
+    db.refresh(subtask)
+
+    # Make sure they start completed
+    assert task.completed is True
+    assert subtask.completed is True
+
+    response = client.post(f"/subtasks/{subtask.id}/reopen")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Subtask reopened"}
+
+    db.refresh(task)
+    db.refresh(subtask)
+
+    assert subtask.completed is False
+    assert task.completed is False

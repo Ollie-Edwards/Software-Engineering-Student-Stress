@@ -245,6 +245,7 @@ def test_reopen_missing_task(client):
 
 # POST /subtasks/{subtask_id}/reopen
 
+
 def test_standard_reopen_task(client, db, task_factory, subtask_factory):
     task = task_factory()
 
@@ -260,6 +261,7 @@ def test_standard_reopen_task(client, db, task_factory, subtask_factory):
     response = client.post(f"/subtasks/{subtask.id}/reopen")
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask reopened"}
+
 
 def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
     task = task_factory()
@@ -280,6 +282,7 @@ def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
     response = client.post(f"/subtasks/{subtask.id}/reopen")
     assert response.status_code == 400
     assert response.json() == {"detail": "Subtask already open"}
+
 
 def test_reopen_missing_subtask(client):
     response = client.post(f"/subtasks/234/reopen")

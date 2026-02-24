@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, Enum, TIMESTAMP
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
-from database import Base
+from app.database import Base
 
 
 class TaskPreferenceEnum(PyEnum):

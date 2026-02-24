@@ -5,17 +5,17 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from database import Base, engine, get_db, DATABASE_URL
-from models.user import User
-from models.task import Task
-from models.subtask import Subtask
+from app.database import Base, engine, get_db, DATABASE_URL
+from app.models.user import User
+from app.models.task import Task
+from app.models.subtask import Subtask
 
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
-from priorityScoring import scoreTask
+from app.priorityScoring import scoreTask
 
 engine = create_engine(DATABASE_URL)
 while True:

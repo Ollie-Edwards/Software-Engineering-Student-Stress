@@ -1,8 +1,7 @@
-# tests/test_score_task.py
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
-from priorityScoring import clamp, scoreTask
+from app.priorityScoring import clamp, scoreTask
 
 
 def make_task(importance=5, length=60, due_in_hours=24, completed=False):

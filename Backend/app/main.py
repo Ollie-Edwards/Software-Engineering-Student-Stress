@@ -5,17 +5,17 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from database import Base, engine, get_db, DATABASE_URL
-from models.user import User
-from models.task import Task
-from models.subtask import Subtask
+from app.database import Base, engine, get_db, DATABASE_URL
+from app.models.user import User
+from app.models.task import Task
+from app.models.subtask import Subtask
 
 import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
-from priorityScoring import scoreTask
+from app.priorityScoring import scoreTask
 
 engine = create_engine(DATABASE_URL)
 while True:
@@ -102,14 +102,15 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 @app.post("/subtasks/{subtask_id}/complete")
 def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
-    parent_task = subtask.task
-    current_time = datetime.now(timezone.utc)
 
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
     if subtask.completed:
         raise HTTPException(status_code=400, detail="Subtask is already completed")
+
+    parent_task = subtask.task
+    current_time = datetime.now(timezone.utc)
 
     subtask.completed = True
     subtask.completed_at = current_time
@@ -151,13 +152,14 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
 @app.post("/subtasks/{subtask_id}/reopen")
 def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
-    parent_task = subtask.task
 
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
     if not subtask.completed:
         raise HTTPException(status_code=400, detail="Subtask already open")
+
+    parent_task = subtask.task
 
     subtask.completed = False
     subtask.completed_at = None

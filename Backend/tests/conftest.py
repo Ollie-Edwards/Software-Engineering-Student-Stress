@@ -58,3 +58,63 @@ def client(db):
         yield c
 
     app.dependency_overrides.clear()
+
+
+# Task and Subtask factories
+from datetime import datetime, timezone
+import pytest
+from app.models.task import Task
+from app.models.subtask import Subtask
+
+
+@pytest.fixture
+def task_factory():
+    def create_task(
+        user_id=1,
+        title="Test Task",
+        description="Test description",
+        completed=False,
+        importance=5,
+        length=30,
+        tags=None,
+        due_at=None,
+        reminder_enabled=False,
+    ):
+        if tags is None:
+            tags = []
+
+        if due_at is None:
+            due_at = datetime.now(timezone.utc)
+
+        return Task(
+            user_id=user_id,
+            title=title,
+            description=description,
+            completed=completed,
+            importance=importance,
+            length=length,
+            tags=tags,
+            due_at=due_at,
+            reminder_enabled=False,
+        )
+
+    return create_task
+
+
+@pytest.fixture
+def subtask_factory():
+    def create_subtask(
+        task, title="Test Subtask", completed=False, status=False, order_index=1
+    ):
+
+        subtask = Subtask(
+            task_id=task.id,
+            title=title,
+            completed=completed,
+            status=status,
+            order_index=order_index,
+        )
+
+        return subtask
+
+    return create_subtask

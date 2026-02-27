@@ -11,6 +11,7 @@ from app.models.subtask import Subtask  # add this
 from app.schemas import TaskResponse
 from app.tasks import router as tasks_router
 from app.reminders import router as reminders_router
+from fastapi.middleware.cors import CORSMiddleware
 
 engine = create_engine(DATABASE_URL)
 while True:
@@ -26,6 +27,13 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():

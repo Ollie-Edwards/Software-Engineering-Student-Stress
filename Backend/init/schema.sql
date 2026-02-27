@@ -40,6 +40,7 @@ CREATE TABLE tasks (
     length SMALLINT NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
     tags VARCHAR(50)[] DEFAULT '{}',
     due_at TIMESTAMP,
+    reminder_enabled BOOLEAN DEFAULT false,
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),

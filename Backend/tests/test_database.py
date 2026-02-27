@@ -12,13 +12,14 @@ def test_complete_task_success(client, db):
         length=30,
         tags=[],
         due_at=datetime.now(timezone.utc),
+        reminder_enabled=False,
     )
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    response = client.post(f"/tasks/{task.id}/complete")
+    response = client.post(f"/tasks/task/{task.id}/complete")
 
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}

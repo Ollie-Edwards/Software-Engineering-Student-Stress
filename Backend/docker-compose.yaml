@@ -3,7 +3,7 @@ services:
     build:
       context: .
     container_name: app1
-    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       - db
     environment:
@@ -16,13 +16,13 @@ services:
     ports:
       - "8001:8000"
     volumes:
-      - ./app:/app
+      - .:/Backend
 
   app2:
     build:
       context: .
     container_name: app2
-    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       - db
     environment:
@@ -35,13 +35,13 @@ services:
     ports:
       - "8002:8000"
     volumes:
-      - ./app:/app
+      - .:/Backend
 
   app3:
     build:
       context: .
     container_name: app3
-    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       - db
     environment:
@@ -54,7 +54,7 @@ services:
     ports:
       - "8003:8000"
     volumes:
-      - ./app:/app
+      - .:/Backend
 
   nginx:
     image: nginx:alpine

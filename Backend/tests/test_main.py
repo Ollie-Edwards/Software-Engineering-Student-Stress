@@ -1,60 +1,5 @@
 from fastapi.testclient import TestClient
 from app.main import app
-from app.models.task import Task
-from datetime import datetime, timezone
-import pytest
-
-
-@pytest.fixture
-def task_factory():
-    def create_task(
-        user_id=1,
-        title="Test Task",
-        description="Test description",
-        completed=False,
-        importance=5,
-        length=30,
-        tags=None,
-        due_at=None,
-    ):
-        if tags is None:
-            tags = []
-
-        if due_at is None:
-            due_at = datetime.now(timezone.utc)
-
-        return Task(
-            user_id=user_id,
-            title=title,
-            description=description,
-            completed=completed,
-            importance=importance,
-            length=length,
-            tags=tags,
-            due_at=due_at,
-        )
-
-    return create_task
-
-
-@pytest.fixture
-def subtask_factory():
-    def create_subtask(
-        task, title="Test Subtask", completed=False, status=False, order_index=1
-    ):
-        from app.models.subtask import Subtask
-
-        subtask = Subtask(
-            task_id=task.id,
-            title=title,
-            completed=completed,
-            status=status,
-            order_index=order_index,
-        )
-
-        return subtask
-
-    return create_subtask
 
 
 def test_read_root(client):
@@ -104,7 +49,7 @@ def test_standard_complete_task(client, db, task_factory):
     db.commit()
     db.refresh(task)
 
-    response = client.post(f"/tasks/{task.id}/complete")
+    response = client.post(f"/tasks/task/{task.id}/complete")
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
 
@@ -116,18 +61,18 @@ def test_double_complete_task(client, db, task_factory):
     db.commit()
     db.refresh(task)
 
-    response = client.post(f"/tasks/{task.id}/complete")
+    response = client.post(f"/tasks/task/{task.id}/complete")
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
 
     # try to complete the same task again
-    response = client.post(f"/tasks/{task.id}/complete")
+    response = client.post(f"/tasks/task/{task.id}/complete")
     assert response.status_code == 400
     assert response.json() == {"detail": "Task is already completed"}
 
 
 def test_complete_missing_task(client):
-    response = client.post(f"/tasks/234/complete")
+    response = client.post(f"/tasks/task/234/complete")
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
@@ -148,7 +93,7 @@ def test_subtasks_are_completed_on_task_completion(
     db.add_all([subtask1, subtask2])
     db.commit()
 
-    response = client.post(f"/tasks/{task.id}/complete")
+    response = client.post(f"/tasks/task/{task.id}/complete")
 
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
@@ -174,7 +119,7 @@ def test_standard_complete_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    response = client.post(f"/subtasks/{subtask.id}/complete")
+    response = client.post(f"/tasks/subtask/{subtask.id}/complete")
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask completed"}
 
@@ -191,17 +136,17 @@ def test_double_complete_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    response = client.post(f"/subtasks/{subtask.id}/complete")
+    response = client.post(f"/tasks/subtask/{subtask.id}/complete")
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask completed"}
 
-    response = client.post(f"/subtasks/{subtask.id}/complete")
+    response = client.post(f"/tasks/subtask/{subtask.id}/complete")
     assert response.status_code == 400
     assert response.json() == {"detail": "Subtask is already completed"}
 
 
 def test_complete_missing_subtask(client):
-    response = client.post(f"/subtasks/234/complete")
+    response = client.post(f"/tasks/subtask/234/complete")
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
 
@@ -216,7 +161,7 @@ def test_standard_reopen_task(client, db, task_factory):
     db.commit()
     db.refresh(task)
 
-    response = client.post(f"/tasks/{task.id}/reopen")
+    response = client.post(f"/tasks/task/{task.id}/reopen")
     assert response.status_code == 200
     assert response.json() == {"message": "Task reopened"}
 
@@ -228,17 +173,17 @@ def test_double_reopen_task(client, db, task_factory):
     db.commit()
     db.refresh(task)
 
-    response = client.post(f"/tasks/{task.id}/reopen")
+    response = client.post(f"/tasks/task/{task.id}/reopen")
     assert response.status_code == 200
     assert response.json() == {"message": "Task reopened"}
 
-    response = client.post(f"/tasks/{task.id}/reopen")
+    response = client.post(f"/tasks/task/{task.id}/reopen")
     assert response.status_code == 400
     assert response.json() == {"detail": "Task already open"}
 
 
 def test_reopen_missing_task(client):
-    response = client.post(f"/tasks/234/reopen")
+    response = client.post(f"/tasks/task/234/reopen")
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
@@ -258,7 +203,7 @@ def test_standard_reopen_task(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    response = client.post(f"/subtasks/{subtask.id}/reopen")
+    response = client.post(f"/tasks/subtask/{subtask.id}/reopen")
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask reopened"}
 
@@ -275,17 +220,17 @@ def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    response = client.post(f"/subtasks/{subtask.id}/reopen")
+    response = client.post(f"/tasks/subtask/{subtask.id}/reopen")
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask reopened"}
 
-    response = client.post(f"/subtasks/{subtask.id}/reopen")
+    response = client.post(f"/tasks/subtask/{subtask.id}/reopen")
     assert response.status_code == 400
     assert response.json() == {"detail": "Subtask already open"}
 
 
 def test_reopen_missing_subtask(client):
-    response = client.post(f"/subtasks/234/reopen")
+    response = client.post(f"/tasks/subtask/234/reopen")
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
 
@@ -307,7 +252,7 @@ def test_reopen_subtask_reopens_parent_task(client, db, task_factory, subtask_fa
     assert task.completed is True
     assert subtask.completed is True
 
-    response = client.post(f"/subtasks/{subtask.id}/reopen")
+    response = client.post(f"/tasks/subtask/{subtask.id}/reopen")
 
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask reopened"}

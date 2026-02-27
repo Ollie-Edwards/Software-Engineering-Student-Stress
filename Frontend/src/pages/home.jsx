@@ -41,6 +41,31 @@ export default function Home({isAdding, setIsAdding}) {
 
           const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
+          const toggleComplete = async (e) => {
+                  e.stopPropagation();
+                  const currentlyCompleted = task.completed; 
+                  const newStatus = !currentlyCompleted;
+
+                  setTasks(prevTasks => prevTasks.map(t => 
+                    t.id === task.id ? { ...t, completed: newStatus } : t
+                  ));
+                  const endpoint = newStatus ? 'complete' : 'reopen';
+                  const url = `http://localhost:8000/tasks/task/${task.id}/${endpoint}`;
+
+                  try {
+                    const response = await fetch(url, { method: 'POST' });
+
+                    if (!response.ok) {
+                      throw new Error("Database update failed");
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    setTasks(prevTasks => prevTasks.map(t => 
+                    t.id === task.id ? { ...t, completed: currentlyCompleted } : t
+                    ));
+                  }
+            }
+
           return(
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
             <div className={`w-2 shrink-0 ${barColor}`} />
@@ -49,19 +74,20 @@ export default function Home({isAdding, setIsAdding}) {
               <div className ="flex justify-between items-start">
                 <div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block ${badgeBg} ${badgeText}`}>
-                    • {priorityLabel} ({task.importance})
+                    • {priorityLabel} ({task.priority})
                   </span>
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
                 <div className="flex items-center gap-1">
-                <button onClick={toggleReminder} className={`p-2 transition-all rounded-lg ${task.reminder ? 'text-indigo-600' : 'text-slate-400'}`}>
-                  {task.reminder ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-slate-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                  <button onClick={toggleComplete} className="focus:outline-none transition-transform active:scale-90">
+                  {task.completed ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
                     </svg>
                   )}
                 </button>

@@ -76,3 +76,27 @@ CREATE TABLE subtasks (
 );
 
 CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);
+
+-- ===========================================
+-- Moodle Proposed Tasks
+-- ===========================================
+CREATE TABLE moodletasks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+
+    course_name VARCHAR(255) NOT NULL,
+    activity VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    referenceURL VARCHAR(255),
+    approved BOOLEAN DEFAULT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_task_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_moodletasks_user_id ON tasks(user_id);

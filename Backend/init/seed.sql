@@ -1,5 +1,5 @@
 -- ===========================================
--- seed.sql — Inserts sample data for Users, Tasks, SubTasks
+-- seed.sql — Inserts sample data for Users, Tasks, SubTasks, MoodleTasks
 -- ===========================================
 
 -- ===========================================
@@ -37,22 +37,31 @@ VALUES
 -- SubTasks
 -- ===========================================
 -- Alice task_id = 1
-INSERT INTO subtasks (task_id, title, status, order_index)
+INSERT INTO subtasks (task_id, title, completed, order_index)
 VALUES
 (1, 'Review last week', TRUE, 1),
 (1, 'Set goals for next week', FALSE, 2),
 (1, 'Assign time blocks', FALSE, 3);
 
 -- Bob: task_id = 4 
-INSERT INTO subtasks (task_id, title, status, order_index)
+INSERT INTO subtasks (task_id, title, completed, order_index)
 VALUES
 (4, 'Write introduction', TRUE, 1),
 (4, 'Compile financial data', FALSE, 2),
 (4, 'Review with team', FALSE, 3);
 
 -- Charlie: task_id = 6
-INSERT INTO subtasks (task_id, title, status, order_index)
+INSERT INTO subtasks (task_id, title, completed, order_index)
 VALUES
 (6, 'Read chapter 1', TRUE, 1),
 (6, 'Take notes on chapter 2', FALSE, 2),
 (6, 'Practice questions', FALSE, 3);
+
+-- ===========================================
+-- Moodle Proposed Tasks
+-- ===========================================
+INSERT INTO moodletasks (user_id, course_name, activity, title, referenceURL)
+VALUES
+(2, 'CM22008 - Algorithms and Complexity', 'Exercise', 'Complete Exercise 1', 'https://moodle.bath.ac.uk/mod/resource/view.php?id=1361324'),
+(2, 'CM22008 - Algorithms and Complexity', 'Lecture', 'Review Lecture 1: Introduction', 'https://uniofbath.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=80dfa01a-65fd-4369-b5c6-b36700fbade1'),
+(2, 'CM22008 - Algorithms and Complexity', 'Lecture', 'Review Lecture 2: Finite automata and regular languages', 'https://uniofbath.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=6ee4238d-d104-4f5c-8570-b36a0056ed81');

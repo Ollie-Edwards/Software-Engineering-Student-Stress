@@ -60,7 +60,7 @@ VALUES
 -- ===========================================
 -- Moodle Proposed Tasks
 -- ===========================================
-INSERT INTO moodletasks (user_id, course_name, activity, title, referenceURL)
+INSERT INTO moodletasks (user_id, course_name, activity, title, reference_url)
 VALUES
 (2, 'CM22008 - Algorithms and Complexity', 'Exercise', 'Complete Exercise 1', 'https://moodle.bath.ac.uk/mod/resource/view.php?id=1361324'),
 (2, 'CM22008 - Algorithms and Complexity', 'Lecture', 'Review Lecture 1: Introduction', 'https://uniofbath.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=80dfa01a-65fd-4369-b5c6-b36700fbade1'),

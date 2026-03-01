@@ -87,11 +87,12 @@ CREATE TABLE moodletasks (
     course_name VARCHAR(255) NOT NULL,
     activity VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    referenceURL VARCHAR(255),
+    reference_url VARCHAR(255),
     approved BOOLEAN DEFAULT NULL,
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    approved_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_task_user
         FOREIGN KEY (user_id)

@@ -118,3 +118,28 @@ def subtask_factory():
         return subtask
 
     return create_subtask
+
+
+# moodletask factory
+@pytest.fixture
+def moodletask_factory():
+    def create_moodletask(
+        user_id=1,
+        course_name="Test Course",
+        activity="Week 2: Using Git",
+        title="Test Title",
+        reference_url="https://example.com",
+        approved=None,
+        approved_at=None,
+    ):
+        return Subtask(
+            user_id=user_id,
+            course_name=course_name,
+            activity=activity,
+            title=title,
+            reference_url=reference_url,
+            approved=approved,
+            approved_at=approved_at,
+        )
+
+    return create_moodletask

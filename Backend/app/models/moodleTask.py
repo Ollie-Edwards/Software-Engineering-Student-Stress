@@ -13,7 +13,7 @@ class Subtask(Base):
     )
 
     course_name = Column(String(255), nullable=False)
-    activity = Column(Boolean, nullable=False)
+    activity = Column(String(255), nullable=False)
     title = Column(String(255), nullable=False)
     reference_url = Column(String(255), nullable=False)
 

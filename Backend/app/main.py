@@ -1,5 +1,6 @@
 import time
 
+from pydantic import BaseModel
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError

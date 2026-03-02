@@ -1,19 +1,16 @@
-from fastapi import FastAPI, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, ConfigDict
-
-from database import Base, engine, get_db, DATABASE_URL
-from models.user import User
-from models.task import Task
-from models.subtask import Subtask
-
 import time
+
+from fastapi import FastAPI
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
+
+from app.database import Base, engine, get_db, DATABASE_URL
+from app.models.user import User  # add this
+from app.models.task import Task  # add this
+from app.models.subtask import Subtask  # add this
+from app.schemas import TaskResponse
+from app.tasks import router as tasks_router
+from app.reminders import router as reminders_router
 
 engine = create_engine(DATABASE_URL)
 while True:

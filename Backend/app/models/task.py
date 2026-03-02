@@ -7,10 +7,11 @@ from sqlalchemy import (
     SmallInteger,
     TIMESTAMP,
     ForeignKey,
+    JSON,
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from database import Base
+from app.database import Base
 
 
 class Task(Base):
@@ -23,14 +24,16 @@ class Task(Base):
 
     title = Column(String(255), nullable=False)
     description = Column(Text)
-    completed = Column(Boolean, nullable=False)
+    completed = Column(Boolean, nullable=False, default=False)
     importance = Column(SmallInteger, default=0)
     length = Column(Integer)
-    tags = Column(Integer)
+    tags = Column(JSON)
     due_at = Column(TIMESTAMP)
+    reminder_enabled = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    completed_at = Column(TIMESTAMP, nullable=True)
 
     user = relationship("User", backref="tasks")
     subtasks = relationship("Subtask", back_populates="task")

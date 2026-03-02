@@ -6,7 +6,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -14,10 +14,9 @@ jobs:
         uses: super-linter/super-linter@v7.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BRANCH: origin/main
+          DEFAULT_BRANCH: main
 
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_PYTHON_BLACK: true
 
-          # Only lint files in the backend/app directory
-          INPUT_INCLUDE: ./backend/app
+          FILTER_REGEX_INCLUDE: .*/backend/app/.*

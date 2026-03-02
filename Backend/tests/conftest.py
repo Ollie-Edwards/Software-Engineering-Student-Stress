@@ -8,14 +8,23 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+
+from app.database import Base, get_db
+from app.main import app
+
+# Task and Subtask factories
+from datetime import datetime, timezone
+import pytest
+from app.models.task import Task
+from app.models.subtask import Subtask
+
+
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 # Add the app directory to the Python path
 ROOT_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
-from app.database import Base, get_db
-from app.main import app
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -58,13 +67,6 @@ def client(db):
         yield c
 
     app.dependency_overrides.clear()
-
-
-# Task and Subtask factories
-from datetime import datetime, timezone
-import pytest
-from app.models.task import Task
-from app.models.subtask import Subtask
 
 
 @pytest.fixture

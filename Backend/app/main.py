@@ -1,6 +1,15 @@
 import time
 
-from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from models.task import Task
+from models.subtask import Subtask
+from database import get_db
+
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
@@ -63,16 +72,6 @@ def get_tasks(db: Session = Depends(get_db)):
 
 
 # ----------------- SUBSTACK CRUD ------------------------------------------------------------------------
-from typing import List, Optional
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
-from models.task import Task
-from models.subtask import Subtask
-from database import get_db
-
 
 class SubtaskCreate(BaseModel):
     title: str

@@ -2,9 +2,11 @@ from datetime import date
 from fastapi.testclient import TestClient
 
 import main
-from database import Base, engine, SessionLocal
-from models.user import User, TaskPreferenceEnum
-from models.task import Task
+from app.database import Base, engine, SessionLocal
+from app.models.user import User, TaskPreferenceEnum  
+from app.models.task import Task  # add this
+
+
 
 client = TestClient(main.app)
 

@@ -1,14 +1,14 @@
 from datetime import date
 from fastapi.testclient import TestClient
 
-import main
+from app.main import app
 from app.database import Base, engine, SessionLocal
 from app.models.user import User, TaskPreferenceEnum  
 from app.models.task import Task  # add this
 
 
 
-client = TestClient(main.app)
+client = TestClient(app)
 
 
 def setup_function():

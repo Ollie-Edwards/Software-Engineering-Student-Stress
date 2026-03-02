@@ -6,10 +6,6 @@ from pydantic import BaseModel, ConfigDict
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from models.task import Task
-from models.subtask import Subtask
-from database import get_db
-
 from fastapi import FastAPI
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError

@@ -84,7 +84,7 @@ def task_factory():
             tags = []
 
         if due_at is None:
-            due_at = datetime.now(timezone.utc)
+            due_at = datetime.now()
 
         return Task(
             user_id=user_id,
@@ -95,7 +95,7 @@ def task_factory():
             length=length,
             tags=tags,
             due_at=due_at,
-            reminder_enabled=False,
+            reminder_enabled=reminder_enabled,
         )
 
     return create_task

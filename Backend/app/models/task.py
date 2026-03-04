@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from database import Base
+from ..database import Base
 
 
 class Task(Base):
@@ -34,3 +34,4 @@ class Task(Base):
 
     user = relationship("User", backref="tasks")
     subtasks = relationship("Subtask", back_populates="task")
+    reminders = relationship("Reminders", back_populates="task")

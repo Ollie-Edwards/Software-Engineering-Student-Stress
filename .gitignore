@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+.venv

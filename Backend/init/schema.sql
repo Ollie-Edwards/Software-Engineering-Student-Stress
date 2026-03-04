@@ -1,3 +1,4 @@
+-- Active: 1770920979649@@localhost@5432@mydb
 -- ===========================================
 -- schema.sql — Creates User, Task, SubTask
 -- ===========================================
@@ -29,15 +30,19 @@ CREATE TYPE task_preference_enum AS ENUM (
     'due_date_first'
 );
 
+CREATE TYPE task_reminder_method_enum AS ENUM (
+    'email',
+    'sms',
+    'push_notification'
+);
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
     task_preference task_preference_enum NOT NULL DEFAULT 'importance_first',
     task_reminder_interval INTERVAL NOT NULL DEFAULT '1 day',
-    task_reminder_method INTEGER NOT NULL DEFAULT 0 CHECK (
-        task_reminder_method IN (0, 1, 2)
-    ),
+    task_reminder_method task_reminder_method_enum NOT NULL DEFAULT 'email',
     email VARCHAR(255) UNIQUE,
     phone_number VARCHAR(20) UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -89,7 +94,7 @@ CREATE TABLE reminders (
     status BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    remind_at TIMESTAMP NOT NULL, -- check after today
+    remind_at TIMESTAMP NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_reminder_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
 );
@@ -125,6 +130,10 @@ BEGIN
 
     IF NEW.remind_at < NOW() THEN
         RAISE EXCEPTION 'Cannot create reminder: reminder date must be in the future';
+    END IF;
+
+    IF NEW.remind_at > v_due_at THEN
+        RAISE EXCEPTION 'Cannot create reminder: reminder date must be before task due date';
     END IF;
 
     RETURN NEW;

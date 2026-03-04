@@ -5,10 +5,13 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
-from database import Base, engine, get_db, DATABASE_URL
-from models.user import User
-from models.task import Task
-from models.subtask import Subtask
+from .database import Base, engine, get_db, DATABASE_URL
+from .models.user import User
+from .models.task import Task
+from .models.subtask import Subtask
+from .models.reminders import Reminders
+from .models.notification import Notification
+from .scheduler import start_scheduler, stop_scheduler
 
 import time
 from sqlalchemy import create_engine
@@ -27,7 +30,17 @@ while True:
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    start_scheduler()
+    yield
+    # Shutdown
+    stop_scheduler()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")

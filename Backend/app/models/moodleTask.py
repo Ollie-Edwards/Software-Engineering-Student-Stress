@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
-class Subtask(Base):
+class MoodleTask(Base):
     __tablename__ = "moodletasks"
 
     id = Column(Integer, primary_key=True)

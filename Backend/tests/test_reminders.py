@@ -1,7 +1,3 @@
-from datetime import datetime, timezone
-from app.models.task import Task
-
-
 def test_enable_reminders_success(client, db, task_factory):
     task = task_factory(reminder_enabled=False)
 

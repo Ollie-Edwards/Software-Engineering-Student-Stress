@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from app.models.task import Task
-
 def test_complete_task_success(client, db, task_factory):
     task = task_factory()
 

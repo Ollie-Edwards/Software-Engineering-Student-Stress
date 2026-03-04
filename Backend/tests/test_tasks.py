@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from app.models.task import Task
-
 # GET "/tasks/"
 
 
@@ -70,7 +67,9 @@ def test_complete_missing_task(client):
     assert response.json() == {"detail": "Task not found"}
 
 
-def test_subtasks_are_completed_on_task_completion(client, db, task_factory, subtask_factory):
+def test_subtasks_are_completed_on_task_completion(
+    client, db, task_factory, subtask_factory
+):
     task = task_factory()
 
     db.add(task)

@@ -33,14 +33,18 @@ TestingSessionLocal = sessionmaker(
 
 Base.metadata.create_all(bind=engine)
 
-
+# Ensure testing database is reset between tests
 @pytest.fixture()
 def db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture()
@@ -65,6 +69,7 @@ from datetime import datetime, timezone
 import pytest
 from app.models.task import Task
 from app.models.subtask import Subtask
+from app.models.moodleTask import MoodleTask
 
 
 @pytest.fixture
@@ -132,7 +137,7 @@ def moodletask_factory():
         approved=None,
         approved_at=None,
     ):
-        return Subtask(
+        return MoodleTask(
             user_id=user_id,
             course_name=course_name,
             activity=activity,

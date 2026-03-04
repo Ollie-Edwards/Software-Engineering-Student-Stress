@@ -33,6 +33,7 @@ TestingSessionLocal = sessionmaker(
 
 Base.metadata.create_all(bind=engine)
 
+
 # Ensure testing database is reset between tests
 @pytest.fixture()
 def db():

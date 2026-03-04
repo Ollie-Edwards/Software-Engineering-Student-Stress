@@ -62,6 +62,34 @@ VALUES
 -- ===========================================
 INSERT INTO moodletasks (user_id, course_name, activity, title, reference_url)
 VALUES
-(2, 'CM22008 - Algorithms and Complexity', 'Exercise', 'Complete Exercise 1', 'https://moodle.bath.ac.uk/mod/resource/view.php?id=1361324'),
-(2, 'CM22008 - Algorithms and Complexity', 'Lecture', 'Review Lecture 1: Introduction', 'https://uniofbath.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=80dfa01a-65fd-4369-b5c6-b36700fbade1'),
-(2, 'CM22008 - Algorithms and Complexity', 'Lecture', 'Review Lecture 2: Finite automata and regular languages', 'https://uniofbath.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=6ee4238d-d104-4f5c-8570-b36a0056ed81');
+-- CM22009 - Week 21 Deep Neural Networks
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture A: Deep Neural Networks', 'https://moodle.bath.ac.uk/course/section.php?id=254855'),
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture B: Deep Neural Networks (Part II) & Loss Functions (Part I)', 'https://moodle.bath.ac.uk/course/section.php?id=254855'),
+(2, 'CM22009 - Machine Learning 2', 'Lab', 'Complete Lab Notebook: Deep Neural Networks', 'https://moodle.bath.ac.uk/course/section.php?id=254855'),
+(2, 'CM22009 - Machine Learning 2', 'Lab', 'Review Lab Solutions: Deep Neural Networks', 'https://moodle.bath.ac.uk/course/section.php?id=254855'),
+
+-- CM22009 - Week 22 Backpropagation
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture A: Backpropagation', 'https://moodle.bath.ac.uk/course/section.php?id=254856'),
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture B: Loss Functions (Part II) & Coursework Introduction', 'https://moodle.bath.ac.uk/course/section.php?id=254856'),
+(2, 'CM22009 - Machine Learning 2', 'Lab', 'Complete Lab Notebooks: Gradient I and Gradient II', 'https://moodle.bath.ac.uk/course/section.php?id=254856'),
+(2, 'CM22009 - Machine Learning 2', 'Lab', 'Review Lab Solutions: Gradient I and Gradient II', 'https://moodle.bath.ac.uk/course/section.php?id=254856'),
+
+-- CM22009 - Week 23 Loss Functions & Regularization
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture A: Loss Functions & Measuring Performance', 'https://moodle.bath.ac.uk/course/section.php?id=254857'),
+(2, 'CM22009 - Machine Learning 2', 'Lecture', 'Review Lecture B: Regularization', 'https://moodle.bath.ac.uk/course/section.php?id=254857'),
+
+-- CM22007 - Week 21 Code Coverage and Containers
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 1: Code Coverage', 'https://moodle.bath.ac.uk/course/section.php?id=255588'),
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 2: Docker', 'https://moodle.bath.ac.uk/course/section.php?id=255588'),
+(2, 'CM22007 - Software Engineering 2', 'Tutorial', 'Review Week 21 Tutorial Slides', 'https://moodle.bath.ac.uk/course/section.php?id=255588'),
+
+-- CM22007 - Week 22 DevOps
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 1: DevOps I', 'https://moodle.bath.ac.uk/course/section.php?id=256225'),
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 2: DevOps II', 'https://moodle.bath.ac.uk/course/section.php?id=256225'),
+(2, 'CM22007 - Software Engineering 2', 'Tutorial', 'Review Week 22 Tutorial Slides', 'https://moodle.bath.ac.uk/course/section.php?id=256225'),
+
+-- CM22007 - Week 23 The AI Software Engineer
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 1: The AI Software Engineer I', 'https://moodle.bath.ac.uk/course/section.php?id=256901'),
+(2, 'CM22007 - Software Engineering 2', 'Lecture', 'Review Lecture 2: The AI Software Engineer II', 'https://moodle.bath.ac.uk/course/section.php?id=256901'),
+(2, 'CM22007 - Software Engineering 2', 'Independent Study', 'Read Independent Study Guidelines: VSCode', 'https://moodle.bath.ac.uk/course/section.php?id=256901'),
+(2, 'CM22007 - Software Engineering 2', 'Independent Study', 'Read Independent Study Guidelines: CoPilot', 'https://moodle.bath.ac.uk/course/section.php?id=256901');

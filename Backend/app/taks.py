@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import OperationalError
 
 
-
 engine = create_engine(DATABASE_URL)
 
 while True:
@@ -33,8 +32,6 @@ app = FastAPI()
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
 
 
 class TaskResponse(BaseModel):
@@ -79,8 +76,7 @@ class TaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-
-#task CRUD
+# task CRUD
 
 
 @app.get("/tasks", response_model=List[TaskResponse])
@@ -142,7 +138,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     return {"message": "Task deleted successfully"}
 
 
-
 class SubtaskResponse(BaseModel):
     id: int
     task_id: int
@@ -173,8 +168,8 @@ class SubtaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
 
 
+# subtask CRUD
 
-#subtask CRUD
 
 @app.get("/subtasks", response_model=List[SubtaskResponse])
 def get_subtasks(db: Session = Depends(get_db)):

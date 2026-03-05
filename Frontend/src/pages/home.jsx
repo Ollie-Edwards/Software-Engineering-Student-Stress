@@ -8,6 +8,7 @@ export default function Home({isAdding, setIsAdding}) {
   const uncompletedTasks = tasks.filter(task => !task.completed);
   const completedTasks = tasks.filter(task => task.completed);
   const [sortOrder, setSortOrder] = useState("desc");
+  const [showSubtasks, setShowSubtasks] = useState(false);
 
     useEffect(() => {
     async function fetchTasks() {
@@ -66,6 +67,18 @@ export default function Home({isAdding, setIsAdding}) {
                   }
             }
 
+          const toggleSubtask = async (subtask) => {
+          const endpoint = subtask.completed ? 'reopen' : 'complete';
+          try {
+            const response = await fetch(`http://localhost:8000/subtask/${subtask.id}/${endpoint}`, {
+              method: 'POST',
+            });
+            if (response.ok) onRefresh(); // Refresh the list to see parent task auto-complete
+          } catch (err) {
+            console.error("Fetch error:", err);
+          }
+          };
+
           return(
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
             <div className={`w-2 shrink-0 ${barColor}`} />
@@ -96,6 +109,11 @@ export default function Home({isAdding, setIsAdding}) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>  
+                <button onClick={(e) => {e.stopPropagation(); setShowSubtasks(!showSubtasks);}} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showSubtasks ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
                 </div>
               </div>
 

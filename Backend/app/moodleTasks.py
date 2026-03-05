@@ -49,7 +49,8 @@ def approve_task(task_id: int, db: Session = Depends(get_db)):
     if task == "already modified":
         raise HTTPException(status_code=400, detail="Task has already been approved/rejected")
     
-    return {"message": "Task approved"}
+    if task.approved:
+        return {"message": "Task approved"}
 
 @router.post("/{task_id}/reject")
 def reject_task(task_id: int, db: Session = Depends(get_db)):
@@ -61,4 +62,5 @@ def reject_task(task_id: int, db: Session = Depends(get_db)):
     if task == "already modified":
         raise HTTPException(status_code=400, detail="Task has already been approved/rejected")
 
-    return {"message": "Task rejected"}
+    if not task.approved:
+        return {"message": "Task rejected"}

@@ -91,7 +91,7 @@ export default function Home({isAdding, setIsAdding}) {
                     </svg>
                   )}
                 </button>
-                <button onClick={(e) => e.stopPropagation()} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
+                <button onClick={(e) => {e.stopPropagation(); handleDeleteTask(task.id);}} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
@@ -115,6 +115,89 @@ export default function Home({isAdding, setIsAdding}) {
           </div>
           )
   }
+
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const updatedData = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      importance: parseInt(formData.get('importance')) || 0,
+      length: parseInt(formData.get('length')) || null,
+      reminder_enabled: formData.get('reminder') === 'on' 
+    };
+
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${editingTask.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        const savedTask = await response.json();
+        setTasks(prev => prev.map(t => t.id === savedTask.id ? savedTask : t));
+        setEditingTask(null);
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const newTaskData = {
+      user_id: 1,
+      title: formData.get('title'),
+      description: formData.get('description'),
+      importance: parseInt(formData.get('importance')) || 0,
+      length: parseInt(formData.get('length')) || null,
+      due_at: formData.get('due_at') ? new Date(formData.get('due_at')).toISOString() : null,
+      reminder_enabled: formData.get('reminder') === 'on',
+      completed: false
+    };
+
+    try {
+      const response = await fetch('http://localhost:8000/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTaskData),
+      });
+
+      if (response.ok) {
+        const createdTask = await response.json();
+        setTasks(prev => [...prev, createdTask]);
+        setShowCreateModal(false);
+      }
+      } catch (error) {
+      console.error("Task creation failed:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+  
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+      
+        if (editingTask?.id === taskId) {
+          setEditingTask(null);
+        }
+      } else {
+        console.error("Failed to delete task");
+      }
+    } catch (error) {
+      console.error("Error during deletion:", error);
+    }
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -172,10 +255,10 @@ export default function Home({isAdding, setIsAdding}) {
                 <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
       
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input required
+                <input name="title" required
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                   defaultValue={editingTask.title} 
                 />
@@ -183,7 +266,7 @@ export default function Home({isAdding, setIsAdding}) {
         
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-              <textarea 
+              <textarea name="description"
                 className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
                 defaultValue={editingTask.description} 
               />
@@ -192,7 +275,7 @@ export default function Home({isAdding, setIsAdding}) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                <input name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
+                <input required name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length (e.g. 30m)</label>
@@ -206,8 +289,8 @@ export default function Home({isAdding, setIsAdding}) {
             </div>
 
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <input name="completed" type="checkbox" defaultChecked={editingTask.completed} className="w-5 h-5 accent-indigo-600" />
-              <span className="text-sm font-semibold text-slate-700">Mark as Completed</span>
+              <input name="reminder_enabled" type="checkbox" defaultChecked={editingTask.reminder} className="w-5 h-5 accent-indigo-600" />
+              <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -238,7 +321,7 @@ export default function Home({isAdding, setIsAdding}) {
               <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
       
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
                 <input name="title" required placeholder="Title" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -265,6 +348,11 @@ export default function Home({isAdding, setIsAdding}) {
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length</label>
                   <input name="length" type="number" min="0" placeholder="30" className="w-full border rounded-xl px-4 py-2 outline-none" />
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                <input name="reminder_enabled" type="checkbox" className="w-5 h-5 accent-indigo-600" />
+                  <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
               </div>
 
               <div className="flex gap-3 pt-4">

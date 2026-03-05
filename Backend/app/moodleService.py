@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.moodleTask import MoodleTask
+from app.models.task import Task
+from datetime import datetime, timezone
 
 class MoodleService:
     
@@ -7,6 +9,57 @@ class MoodleService:
     @staticmethod
     def get_tasks(db: Session, user_id: int):
         return db.query(MoodleTask).filter(MoodleTask.user_id == user_id).all()
+    
+    @staticmethod
+    def get_task_by_id(db: Session, task_id: int):
+        return db.query(MoodleTask).filter(MoodleTask.id == task_id).first()
+    
+    @staticmethod
+    def get_pending_tasks(db: Session, user_id: int):
+        return db.query(MoodleTask).filter(
+            MoodleTask.user_id == user_id,
+            MoodleTask.approved == None
+        ).all()
+    
+    @staticmethod
+    def approve_task(db: Session, task_id: int):
+        moodle_task = MoodleService.get_task_by_id(db, task_id)
+
+        if not moodle_task:
+            return None
+        
+        if moodle_task.approved is not None:
+            return "already modified"
+        
+        moodle_task.approved = True
+        moodle_task.approved_at = datetime.now(timezone.utc)
+
+        # Add to user's tasks
+        new_task = Task(
+            user_id = moodle_task.user_id,
+            title = moodle_task.title
+        )
+
+        db.add(new_task)
+        db.commit()
+
+        return moodle_task
+    
+    @staticmethod
+    def reject_task(db: Session, task_id: int):
+        moodle_task = MoodleService.get_task_by_id(db, task_id)
+
+        if not moodle_task:
+            return None
+        
+        if moodle_task.approved is not None:
+            return "already modified"
+        
+        moodle_task.approved = False
+
+        db.commit()
+
+        return moodle_task
     
     # Simulate Moodle API response
     @staticmethod

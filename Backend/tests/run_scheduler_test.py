@@ -2,9 +2,8 @@ import os
 from datetime import datetime
 import pytest
 
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
 from dotenv import load_dotenv
-from app.database import Base, engine, SessionLocal
 from app.models.user import User
 from app.models.task import Task
 from app.models.subtask import Subtask
@@ -12,14 +11,10 @@ from app.models.reminders import Reminders
 from app.models.notification import Notification
 import app.scheduler as scheduler
 
-Base.metadata.create_all(bind=engine)
 
-
-@pytest.fixture
 def db():
-    db = SessionLocal()
-    yield db
-    db.close()
+    # Use the db fixture from conftest.py
+    pass  # The db fixture is already provided by conftest.py
 
 
 @pytest.fixture

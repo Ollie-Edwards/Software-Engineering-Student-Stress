@@ -1,10 +1,39 @@
 -- ===========================================
--- schema.sql — Creates User, Task, SubTask
+-- Automatically create reminders for high-priority tasks
 -- ===========================================
 
+CREATE OR REPLACE FUNCTION create_reminder_on_task_insert()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_reminder_interval INTERVAL;
+BEGIN
+    -- Only create reminder if enabled, due_at is set, and importance > 7
+    IF NEW.reminder_enabled AND NEW.due_at IS NOT NULL AND NEW.importance > 7 THEN
+        SELECT task_reminder_interval
+        INTO v_reminder_interval
+        FROM users
+        WHERE id = NEW.user_id;
+
+        INSERT INTO reminders (task_id, remind_at, enabled)
+        VALUES (
+            NEW.id,
+            NEW.due_at - v_reminder_interval,
+            TRUE
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER auto_create_reminder_on_task_insert
+AFTER INSERT ON tasks
+FOR EACH ROW
+EXECUTE FUNCTION create_reminder_on_task_insert();
 -- For development only (Will delete all existing data)
 DROP TABLE IF EXISTS subtasks CASCADE;
+
 DROP TABLE IF EXISTS tasks CASCADE;
+
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ===========================================
@@ -39,30 +68,25 @@ CREATE TABLE users (
 -- ===========================================
 -- Tasks
 -- ===========================================
+
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    
     title VARCHAR(255) NOT NULL,
     description TEXT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     importance SMALLINT NOT NULL DEFAULT 0 CHECK (importance BETWEEN 0 AND 10),
-    length SMALLINT NOT NULL DEFAULT 0 CHECK (length BETWEEN 5 AND 300),
-    tags VARCHAR(50)[] DEFAULT '{}',
+    LENGTH SMALLINT NOT NULL DEFAULT 0 CHECK (LENGTH BETWEEN 5 AND 300),
+    tags JSONB DEFAULT '{}',
     due_at TIMESTAMP,
-    reminder_enabled BOOLEAN DEFAULT false,
-
+    reminder_enabled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMP DEFAULT NULL,
-
-    CONSTRAINT fk_task_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
+    CONSTRAINT fk_task_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX idx_tasks_user_id ON tasks (user_id);
 
 -- ===========================================
 -- SubTasks
@@ -70,22 +94,16 @@ CREATE INDEX idx_tasks_user_id ON tasks(user_id);
 CREATE TABLE subtasks (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
-
     title VARCHAR(255) NOT NULL,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     order_index INTEGER NOT NULL,
-
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMP DEFAULT NULL,
-
-    CONSTRAINT fk_subtask_task
-        FOREIGN KEY (task_id)
-        REFERENCES tasks(id)
-        ON DELETE CASCADE
+    CONSTRAINT fk_subtask_task FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);
+CREATE INDEX idx_subtasks_task_id ON subtasks (task_id);
 
 -- ===========================================
 -- Moodle Proposed Tasks
@@ -93,24 +111,18 @@ CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);
 CREATE TABLE moodletasks (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-
     course_name VARCHAR(255) NOT NULL,
     activity VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     reference_url VARCHAR(255),
     approved BOOLEAN DEFAULT NULL,
-
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     approved_at TIMESTAMP DEFAULT NULL,
-
-    CONSTRAINT fk_task_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
+    CONSTRAINT fk_task_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_moodletasks_user_id ON tasks(user_id);
+CREATE INDEX idx_moodletasks_user_id ON tasks (user_id);
 
 -- ===========================================
 -- Reminders
@@ -232,7 +244,8 @@ BEGIN
         -- Append the new line to the existing message and adjust scheduled_at to the earliest time
         UPDATE notifications
         SET message = notifications.message || E'\n' || v_msg_line,
-            scheduled_at = LEAST(notifications.scheduled_at, NEW.remind_at)
+            -- scheduled_at = LEAST(notifications.scheduled_at, NEW.remind_at)
+            scheduled_at = NOW()
         WHERE id = v_notification_id;
 
         -- Link the reminder to the existing notification
@@ -346,7 +359,8 @@ BEGIN
         IF FOUND THEN
             UPDATE notifications
             SET message = notifications.message || E'\n' || v_msg_line,
-                scheduled_at = LEAST(notifications.scheduled_at, NEW.remind_at)
+                -- scheduled_at = LEAST(notifications.scheduled_at, NEW.remind_at)
+                scheduled_at = NOW()
             WHERE id = v_notification_id;
 
             INSERT INTO notification_reminders (notification_id, reminder_id)
@@ -368,84 +382,5 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_notification_on_reminder_change
 AFTER UPDATE OF remind_at, enabled ON reminders
-FOR EACH ROW
-EXECUTE FUNCTION update_notification_on_reminder_change();
-
-CREATE OR REPLACE FUNCTION update_notification_on_reminder_change()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_notification_id INT;
-    v_lines TEXT[];
-    v_title TEXT;
-    v_due_at TIMESTAMP;
-    v_user_id INT;
-    v_day DATE;
-    v_msg_line TEXT;
-BEGIN
-    -- If reminder was disabled: remove its links and rebuild/delete notifications
-    IF OLD.enabled = TRUE AND NEW.enabled = FALSE THEN
-    FOR v_notification_id IN
-        SELECT notification_id FROM notification_reminders WHERE reminder_id = OLD.id
-    LOOP
-        DELETE FROM notification_reminders
-        WHERE notification_id = v_notification_id AND reminder_id = OLD.id;
-
-        SELECT array_agg(format('- %s (due %s)', t.title, to_char(r.due_at,'YYYY-MM-DD HH24:MI')) ORDER BY r.remind_at)
-        INTO v_lines
-        FROM notification_reminders nr
-        JOIN reminders r ON nr.reminder_id = r.id
-        JOIN tasks t ON r.task_id = t.id
-        WHERE nr.notification_id = v_notification_id;
-
-        IF v_lines IS NULL THEN
-        DELETE FROM notifications WHERE id = v_notification_id;
-        ELSE
-        UPDATE notifications SET message = array_to_string(v_lines, E'\n') WHERE id = v_notification_id;
-        END IF;
-    END LOOP;
-
-    RETURN NEW;
-    END IF;
-
-    -- If reminder became enabled (or remind_at changed and you want re-attach), attach/create notification
-    IF NEW.enabled = TRUE THEN
-    SELECT t.title, t.due_at, t.user_id INTO v_title, v_due_at, v_user_id
-    FROM tasks t WHERE t.id = NEW.task_id;
-
-    v_day := NEW.remind_at::date;
-    v_msg_line := format('- %s (due %s)', v_title, to_char(v_due_at,'YYYY-MM-DD HH24:MI'));
-
-    SELECT id INTO v_notification_id
-    FROM notifications
-    WHERE user_id = v_user_id AND (scheduled_at::date) = v_day
-    ORDER BY scheduled_at LIMIT 1;
-
-    IF FOUND THEN
-        UPDATE notifications
-        SET message = notifications.message || E'\n' || v_msg_line,
-            scheduled_at = LEAST(notifications.scheduled_at, NEW.remind_at)
-        WHERE id = v_notification_id;
-
-        INSERT INTO notification_reminders(notification_id, reminder_id)
-        VALUES (v_notification_id, NEW.id)
-        ON CONFLICT DO NOTHING;
-    ELSE
-        INSERT INTO notifications (user_id, message, scheduled_at)
-        VALUES (v_user_id, v_msg_line, NEW.remind_at)
-        RETURNING id INTO v_notification_id;
-
-        INSERT INTO notification_reminders(notification_id, reminder_id)
-        VALUES (v_notification_id, NEW.id);
-    END IF;
-
-    RETURN NEW;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_notification_on_reminder_change
-AFTER UPDATE OF enabled, remind_at ON reminders
 FOR EACH ROW
 EXECUTE FUNCTION update_notification_on_reminder_change();

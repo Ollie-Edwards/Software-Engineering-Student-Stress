@@ -17,6 +17,8 @@ def send_email(to_email, subject, body):
 
     GMAIL_USER = os.getenv("GMAIL_USER")
     GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+    print(f"[DEBUG] GMAIL_USER: {GMAIL_USER}")
+    print(f"[DEBUG] GMAIL_APP_PASSWORD present: {bool(GMAIL_APP_PASSWORD)}")
 
     if not GMAIL_USER or not GMAIL_APP_PASSWORD:
         print("✗ Gmail credentials not configured in .env")
@@ -127,3 +129,10 @@ def stop_scheduler():
     if scheduler.running:
         scheduler.shutdown()
         print("✓ Notification scheduler stopped")
+
+
+# send_email(
+#     to_email="hulmetjx@gmail.com",
+#     subject="Test Email",
+#     body="This is a test email from the scheduler.",
+# )

@@ -1,6 +1,17 @@
 from pydantic import BaseModel, ConfigDict
-from datetime import datetime
 from typing import List, Optional
+from datetime import datetime
+
+
+class TaskCreate(BaseModel):
+    user_id: int
+    title: str
+    description: str = None
+    importance: int = 0
+    length: int = 0
+    tags: List[str] = []
+    due_at: datetime
+    reminder_enabled: bool = False
 
 
 class TaskResponse(BaseModel):

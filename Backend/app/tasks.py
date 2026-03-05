@@ -8,9 +8,28 @@ from app.database import get_db
 from app.models.task import Task
 from app.models.subtask import Subtask
 from app.priorityScoring import scoreTask
-from app.schemas import TaskResponse
+from app.schemas import TaskCreate, TaskResponse
 
 router = APIRouter()
+
+# Added for testing, can be replaced
+
+@router.post("", response_model=TaskResponse)
+def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+    db_task = Task(
+        user_id=task.user_id,
+        title=task.title,
+        description=task.description,
+        importance=task.importance,
+        length=task.length,
+        tags=task.tags,
+        due_at=task.due_at,
+        reminder_enabled=task.reminder_enabled,
+    )
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
 
 
 @router.get(

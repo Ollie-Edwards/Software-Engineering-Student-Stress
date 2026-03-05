@@ -20,7 +20,9 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./Frontend
-        run: npm ci
+        run: |
+          npm ci
+          npm install @vitest/coverage-v8 --save-dev
 
       - name: Run tests with coverage
         working-directory: ./Frontend

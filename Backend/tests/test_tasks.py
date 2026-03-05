@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from app.models.task import Task
-
 # GET "/tasks/"
 
 

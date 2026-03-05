@@ -34,13 +34,18 @@ TestingSessionLocal = sessionmaker(
 Base.metadata.create_all(bind=engine)
 
 
+# Ensure testing database is reset between tests
 @pytest.fixture()
 def db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
 
 
 @pytest.fixture()
@@ -65,6 +70,7 @@ from datetime import datetime, timezone
 import pytest
 from app.models.task import Task
 from app.models.subtask import Subtask
+from app.models.moodleTask import MoodleTask
 
 
 @pytest.fixture
@@ -84,7 +90,7 @@ def task_factory():
             tags = []
 
         if due_at is None:
-            due_at = datetime.now(timezone.utc)
+            due_at = datetime.now()
 
         return Task(
             user_id=user_id,
@@ -95,7 +101,7 @@ def task_factory():
             length=length,
             tags=tags,
             due_at=due_at,
-            reminder_enabled=False,
+            reminder_enabled=reminder_enabled,
         )
 
     return create_task
@@ -117,3 +123,28 @@ def subtask_factory():
         return subtask
 
     return create_subtask
+
+
+# moodletask factory
+@pytest.fixture
+def moodletask_factory():
+    def create_moodletask(
+        user_id=1,
+        course_name="Test Course",
+        activity="Week 2: Using Git",
+        title="Test Title",
+        reference_url="https://example.com",
+        approved=None,
+        approved_at=None,
+    ):
+        return MoodleTask(
+            user_id=user_id,
+            course_name=course_name,
+            activity=activity,
+            title=title,
+            reference_url=reference_url,
+            approved=approved,
+            approved_at=approved_at,
+        )
+
+    return create_moodletask

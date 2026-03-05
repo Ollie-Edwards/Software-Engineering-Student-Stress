@@ -5,13 +5,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
 from app.database import Base, engine, get_db, DATABASE_URL
-from app.models.user import User  # add this
-from app.models.task import Task  # add this
-from app.models.subtask import Subtask  # add this
+
+# These are required so that when the database is created, the correct tables are added
+from app.models.user import User
+from app.models.task import Task
+from app.models.subtask import Subtask
 from app.schemas import TaskResponse
+from app.models.moodleTask import MoodleTask
+
 from app.tasks import router as tasks_router
 from app.reminders import router as reminders_router
-from fastapi.middleware.cors import CORSMiddleware
+from app.moodleTasks import router as moodletasks_router
 
 engine = create_engine(DATABASE_URL)
 while True:
@@ -42,3 +46,4 @@ async def root():
 
 app.include_router(tasks_router, prefix="/tasks", tags=["tasks"])
 app.include_router(reminders_router, prefix="/reminders", tags=["reminders"])
+app.include_router(moodletasks_router, prefix="/moodletasks", tags=["moodletasks"])

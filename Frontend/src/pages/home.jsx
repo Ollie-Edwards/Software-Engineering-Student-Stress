@@ -29,6 +29,39 @@ export default function Home({isAdding, setIsAdding}) {
   if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
 
+  /*ADDED*/
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const payload = {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      importance: Number(formData.get("importance")),
+      length: Number(formData.get("length")),
+      due_at: formData.get("due_at") ? new Date(formData.get("due_at")).toISOString() : null,
+      // due_at: formData.get("due_at"),
+    };
+
+    const res = await fetch("http://localhost:8000/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const newTask = await res.json();
+
+    setTasks((prev) => [...prev, newTask]);
+    setIsAdding(false);
+  };
+
+  /*ADDED*/
+
   const Taskcard = (task) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}
           const isHigh = task.importance >= 8;
@@ -82,8 +115,11 @@ export default function Home({isAdding, setIsAdding}) {
                 <p><strong>Importance:</strong> {task.importance}</p>
                 <p><strong>Length:</strong> {task.length}</p>
                 <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
-                <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
+                <p><strong>Created At:</strong> {task.created_at ? new Date(task.created_at).toLocaleString() : "N/A"}</p>
+                <p><strong>Updated At:</strong> {task.updated_at ? new Date(task.updated_at).toLocaleString() : "N/A"}</p>
+                {/*<p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
                 <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+                  */}
               </div>
           </div>
           </div>
@@ -93,47 +129,61 @@ export default function Home({isAdding, setIsAdding}) {
   return (
     <div className="p-6 space-y-4">
       <div className="flex justify-between items-end mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
-        <p className="text-slate-500 mt-1">
-          You have <span className="font-semibold text-indigo-600">{uncompletedTasks.length}</span> tasks remaining.
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
+          <p className="text-slate-500 mt-1">
+            You have{" "}
+            <span className="font-semibold text-indigo-600">
+              {uncompletedTasks.length}
+            </span>{" "}
+            tasks remaining.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
+          <span className="text-xs font-bold text-slate-400 uppercase">
+            Sort By
+          </span>
+          <select
+            className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="desc">Highest to Lowest priority</option>
+            <option value="asc">Lowest to Highest priority</option>
+          </select>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
-        <span className="text-xs font-bold text-slate-400 uppercase">Sort By</span>
-        <select className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer" value = {sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-          <option value="desc">Highest to Lowest priority</option>
-          <option value="asc">Lowest to Highest priority</option>
-        </select>
-      </div>
-      </div>
-      
       {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
       <div className="grid gap-4">
         {[...uncompletedTasks]
           .sort((a, b) => {
-            return sortOrder === "desc" 
+            return sortOrder === "desc"
               ? b.importance - a.importance
               : a.importance - b.importance;
           })
-          .map(task => Taskcard(task))}
-      </div>  
+          .map((task) => Taskcard(task))}
+      </div>
 
       {completedTasks.length > 0 && (
         <div className="mt-12 space-y-4 pt-8 border-t border-dashed">
           <h1 className="text-3xl font-bold text-slate-900">Completed</h1>
           <p className="text-slate-500 mt-1">
-            You have completed <span className="font-semibold text-indigo-600">{completedTasks.length}</span> tasks.
+            You have completed{" "}
+            <span className="font-semibold text-indigo-600">
+              {completedTasks.length}
+            </span>{" "}
+            tasks.
           </p>
-          <div className="grid gap-4"> 
+          <div className="grid gap-4">
             {[...completedTasks]
               .sort((a, b) => {
-                return sortOrder === "desc" 
+                return sortOrder === "desc"
                   ? b.importance - a.importance
                   : a.importance - b.importance;
               })
-              .map(task => Taskcard(task))}
+              .map((task) => Taskcard(task))}
           </div>
         </div>
       )}
@@ -143,62 +193,106 @@ export default function Home({isAdding, setIsAdding}) {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-800">Edit Task</h2>
-                <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+              <button
+                onClick={() => setEditingTask(null)}
+                className="text-slate-400 hover:text-slate-600 text-2xl"
+              >
+                &times;
+              </button>
             </div>
-      
-            <form className="p-6 space-y-4">
+
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+              {/* <form className="p-6 space-y-4"> */}
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input required
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                  Title
+                </label>
+                <input
+                  required
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  defaultValue={editingTask.title} 
+                  defaultValue={editingTask.title}
                 />
               </div>
-        
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-              <textarea 
-                className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
-                defaultValue={editingTask.description} 
-              />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                <input name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                  Description
+                </label>
+                <textarea
+                  className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  defaultValue={editingTask.description}
+                />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    Importance (1-10)
+                  </label>
+                  <input
+                    name="importance"
+                    type="number"
+                    min="1"
+                    max="10"
+                    defaultValue={editingTask.importance}
+                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    Length (e.g. 30m)
+                  </label>
+                  <input
+                    name="length"
+                    defaultValue={editingTask.length}
+                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length (e.g. 30m)</label>
-                <input name="length" defaultValue={editingTask.length} className="w-full border rounded-xl px-4 py-2 outline-none" />
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Due Date
+                </label>
+                <input
+                  name="due_at"
+                  type="datetime-local"
+                  defaultValue={
+                    editingTask.due_at
+                      ? editingTask.due_at.substring(0, 16)
+                      : ""
+                  }
+                  className="w-full border rounded-xl px-4 py-2 outline-none"
+                />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Due Date</label>
-              <input name="due_at" type="datetime-local" defaultValue={editingTask.due_at ? editingTask.due_at.substring(0, 16) : ""} className="w-full border rounded-xl px-4 py-2 outline-none" />
-            </div>
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                <input
+                  name="completed"
+                  type="checkbox"
+                  defaultChecked={editingTask.completed}
+                  className="w-5 h-5 accent-indigo-600"
+                />
+                <span className="text-sm font-semibold text-slate-700">
+                  Mark as Completed
+                </span>
+              </div>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <input name="completed" type="checkbox" defaultChecked={editingTask.completed} className="w-5 h-5 accent-indigo-600" />
-              <span className="text-sm font-semibold text-slate-700">Mark as Completed</span>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button 
-                type="button"
-                onClick={() => setEditingTask(null)}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
-              >
-                Save Changes
-              </button>
-            </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingTask(null)}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -208,48 +302,101 @@ export default function Home({isAdding, setIsAdding}) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b flex justify-between items-center bg-indigo-50">
-              <h2 className="text-xl font-bold text-slate-800">Create New Task</h2>
-              <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+              <h2 className="text-xl font-bold text-slate-800">
+                Create New Task
+              </h2>
+              <button
+                onClick={() => setIsAdding(false)}
+                className="text-slate-400 hover:text-slate-600 text-2xl"
+              >
+                &times;
+              </button>
             </div>
-      
-            <form className="p-6 space-y-4">
+
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+              {/* <form className="p-6 space-y-4"> */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input name="title" required placeholder="Title" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Title
+                </label>
+                <input
+                  name="title"
+                  required
+                  placeholder="Title"
+                  className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
-                <textarea name="description" placeholder="Add some details..." className="w-full border rounded-xl px-4 py-2 h-20 outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  placeholder="Add some details..."
+                  className="w-full border rounded-xl px-4 py-2 h-20 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
                   Due Date & Time
                 </label>
-              <input name="due_at" type="datetime-local" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input
+                  name="due_at"
+                  type="datetime-local"
+                  className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                  <input name="importance" required type="number" min="1" max="10" placeholder="5" className="w-full border rounded-xl px-4 py-2 outline-none" />
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    Importance (1-10)
+                  </label>
+                  <input
+                    name="importance"
+                    required
+                    type="number"
+                    min="1"
+                    max="10"
+                    placeholder="5"
+                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length</label>
-                  <input name="length" type="number" min="0" placeholder="30" className="w-full border rounded-xl px-4 py-2 outline-none" />
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    Length
+                  </label>
+                  <input
+                    name="length"
+                    type="number"
+                    min="0"
+                    placeholder="30"
+                    className="w-full border rounded-xl px-4 py-2 outline-none"
+                  />
                 </div>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsAdding(false)} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-200">Create Task</button>
+                <button
+                  type="button"
+                  onClick={() => setIsAdding(false)}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-200"
+                >
+                  Create Task
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
-  
     </div>
   );
 }

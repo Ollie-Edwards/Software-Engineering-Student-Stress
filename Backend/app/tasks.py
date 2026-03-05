@@ -10,11 +10,11 @@ from app.models.subtask import Subtask
 from app.priorityScoring import scoreTask
 from app.schemas import TaskResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/tasks")
 
 
 @router.get(
-    "",
+    "/",
     response_model=List[TaskResponse],
     summary="Retrieve all tasks",
     description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",

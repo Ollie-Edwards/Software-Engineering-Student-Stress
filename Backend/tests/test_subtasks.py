@@ -7,7 +7,6 @@ from app.models.user import User, TaskPreferenceEnum
 from app.models.task import Task  # add this
 
 
-
 client = TestClient(app)
 
 

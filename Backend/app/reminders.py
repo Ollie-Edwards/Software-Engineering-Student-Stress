@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.task import Task
 
-router = APIRouter()
-
+router = APIRouter(prefix="/reminders")
 
 # Enable Reminders
 @router.post("/{task_id}/enable_reminders")

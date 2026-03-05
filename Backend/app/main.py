@@ -1,7 +1,7 @@
 import time
 
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -31,6 +31,9 @@ while True:
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.include_router(tasks_router)
+app.include_router(reminders_router)
 
 
 @app.get("/")

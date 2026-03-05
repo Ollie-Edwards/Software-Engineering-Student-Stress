@@ -15,7 +15,7 @@ class Subtask(Base):
     title = Column(String(255), nullable=False)
     status = Column(Boolean, nullable=False)
     order_index = Column(Integer)
-    completed = Column(Boolean, nullable=False)
+    completed = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

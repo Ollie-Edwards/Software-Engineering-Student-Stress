@@ -28,7 +28,9 @@ class User(Base):
         Enum(TaskPreferenceEnum, name="task_preference_enum"),
         default=TaskPreferenceEnum.importance_first,
     )
-    task_reminder_interval = Column(Interval, default="1 day")
+    from datetime import timedelta
+
+    task_reminder_interval = Column(Interval, default=timedelta(days=1))
     task_reminder_method = Column(
         Enum(TaskReminderMethodEnum, name="task_reminder_method_enum"),
         default=TaskReminderMethodEnum.email,

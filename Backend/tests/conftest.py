@@ -71,6 +71,8 @@ import pytest
 from app.models.task import Task
 from app.models.subtask import Subtask
 from app.models.moodleTask import MoodleTask
+from app.models.reminders import Reminders
+from app.models.notification import Notification
 
 
 @pytest.fixture

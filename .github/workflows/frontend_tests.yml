@@ -1,0 +1,29 @@
+name: Run Frontend Tests
+run-name: ${{ github.actor }} is running frontend unit tests
+on: [push]
+
+jobs:
+  test_frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Set up Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./Frontend
+        run: |
+          npm ci
+          npm install @vitest/coverage-v8 --save-dev
+
+      - name: Run tests with coverage
+        working-directory: ./Frontend
+        run: npx vitest run --coverage

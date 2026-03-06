@@ -20,3 +20,9 @@ Once the app is running, you can access:
 
 - **Frontend**: http://localhost:5173/
 - **Backend**: http://localhost:8000
+
+### Accessing the API Docs
+
+Once the app is running, you can access docs here:
+
+- http://localhost:8001/docs

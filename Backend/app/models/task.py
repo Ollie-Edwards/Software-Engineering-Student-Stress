@@ -24,11 +24,12 @@ class Task(Base):
 
     title = Column(String(255), nullable=False)
     description = Column(Text)
-    completed = Column(Boolean, nullable=False)
+    completed = Column(Boolean, nullable=False, default=False)
     importance = Column(SmallInteger, default=0)
     length = Column(Integer)
     tags = Column(JSON)
     due_at = Column(TIMESTAMP)
+    reminder_enabled = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

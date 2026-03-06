@@ -1,63 +1,20 @@
-import time
+from datetime import datetime, timezone
+from typing import List
 
-from fastapi import FastAPI
-from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-from app.database import Base, engine, get_db, DATABASE_URL
-
-# These are required so that when the database is created, the correct tables are added
-from app.models.user import User
+from app.database import get_db
 from app.models.task import Task
 from app.models.subtask import Subtask
+from app.priorityScoring import scoreTask
 from app.schemas import TaskResponse
-from app.models.moodleTask import MoodleTask
 
-from app.tasks import router as tasks_router
-from app.reminders import router as reminders_router
-from app.moodleTasks import router as moodletasks_router
-
-engine = create_engine(DATABASE_URL)
-while True:
-    try:
-        conn = engine.connect()
-        conn.close()
-        break
-    except OperationalError:
-        print("Database not ready, retrying in 2s...")
-        time.sleep(2)
-
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI()
+router = APIRouter()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-class TaskResponse(BaseModel):
-    id: int
-    user_id: int
-    title: str  # The title of the task
-    description: Optional[str] = None  # A short description of the task
-    completed: bool  # Whether or not the task is complete
-    importance: int  # How important the task is (scale from 1-10)
-    length: int  # How many minuites this will take (<5 - 300)
-    tags: List[str] = (
-        []
-    )  # A list of string tags (can be []). No longer than 50 chars per tag
-    due_at: datetime  # The date that this must be completed by
-    priority: float  # Determines the task priority score
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-@app.get(
-    "/tasks",
+@router.get(
+    "",
     response_model=List[TaskResponse],
     summary="Retrieve all tasks",
     description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
@@ -72,7 +29,7 @@ def get_tasks(db: Session = Depends(get_db)):
 
 
 # Marking a task as complete
-@app.post("/tasks/{task_id}/complete")
+@router.post("/task/{task_id}/complete")
 def complete_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
 
@@ -99,7 +56,7 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 
 
 # Marking a subtask as complete
-@app.post("/subtasks/{subtask_id}/complete")
+@router.post("/subtask/{subtask_id}/complete")
 def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
 
@@ -128,7 +85,7 @@ def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 
 # Reopen a task
-@app.post("/tasks/{task_id}/reopen")
+@router.post("/task/{task_id}/reopen")
 def reopen_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
 
@@ -149,7 +106,7 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
 
 
 # Reopen a subtask
-@app.post("/subtasks/{subtask_id}/reopen")
+@router.post("/subtask/{subtask_id}/reopen")
 def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
 
@@ -173,6 +130,3 @@ def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
     if not subtask.completed:
         return {"message": "Subtask reopened"}
-
-
-#

@@ -20,6 +20,9 @@ export default function NavigationBar({onAddTask}) {
 
       {/* New Tasks button */}
       <div className="flex items-center gap-4">
+        <button onClick={() => window.location.href = '/'} className="px-4 py-2 border-2 border-slate-200 hover:border-slate-300 text-slate-600 font-bold rounded-xl transition-all">
+          Moodle tasks
+        </button>
         <button onClick={onAddTask} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700">
           + New Task
         </button>

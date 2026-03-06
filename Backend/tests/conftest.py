@@ -117,7 +117,6 @@ def subtask_factory():
             task_id=task.id,
             title=title,
             completed=completed,
-            status=status,
             order_index=order_index,
         )
 

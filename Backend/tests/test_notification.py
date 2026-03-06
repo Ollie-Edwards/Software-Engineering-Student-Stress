@@ -5,11 +5,13 @@ from app.models.user import User
 from app.models.notification import Notification
 import app.scheduler as scheduler
 
+
 @pytest.fixture
 def db():
     db = SessionLocal()
     yield db
     db.close()
+
 
 @pytest.fixture
 def test_user(db):
@@ -24,6 +26,7 @@ def test_user(db):
     yield user
     db.delete(user)
     db.commit()
+
 
 @pytest.fixture
 def test_notification(db, test_user):
@@ -40,16 +43,19 @@ def test_notification(db, test_user):
     db.delete(notif)
     db.commit()
 
+
 def test_notification_model(test_notification):
     assert test_notification.id is not None
     assert test_notification.message == "Test notification"
     assert not test_notification.delivered
+
 
 def test_send_email(monkeypatch):
     # Patch send_email to always return True
     monkeypatch.setattr(scheduler, "send_email", lambda *a, **kw: True)
     result = scheduler.send_email("to@example.com", "Subject", "Body")
     assert result is True
+
 
 def test_check_and_send_notifications(db, test_user, test_notification, monkeypatch):
     monkeypatch.setattr(scheduler, "send_email", lambda *a, **kw: True)

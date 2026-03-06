@@ -79,7 +79,10 @@ def check_and_send_notifications():
                     print(
                         f"⚠ SMS notification not implemented for User ID {notification.user_id}"
                     )
-                elif user.task_reminder_method == TaskReminderMethodEnum.push_notification:
+                elif (
+                    user.task_reminder_method
+                    == TaskReminderMethodEnum.push_notification
+                ):
                     # TODO: Implement push notification sending
                     print(
                         f"⚠ Push notification not implemented for User ID {notification.user_id}"

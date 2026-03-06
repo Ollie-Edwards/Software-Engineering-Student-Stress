@@ -55,7 +55,7 @@ def test_notification(db, test_user):
 
 
 def test_scheduler_sends_notification(db, test_user, test_notification, monkeypatch):
-    monkeypatch.setattr(scheduler, "send_email", lambda *a, **kw: True)
+    # monkeypatch.setattr(scheduler, "send_email", lambda *a, **kw: True)
     scheduler.check_and_send_notifications()
     db.refresh(test_notification)
     assert test_notification.delivered in [True, False]  # depends on implementation

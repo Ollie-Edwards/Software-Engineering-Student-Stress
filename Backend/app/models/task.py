@@ -37,3 +37,4 @@ class Task(Base):
 
     user = relationship("User", backref="tasks")
     subtasks = relationship("Subtask", back_populates="task")
+    reminders = relationship("Reminders", back_populates="task")

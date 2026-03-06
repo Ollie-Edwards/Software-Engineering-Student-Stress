@@ -20,7 +20,7 @@ from app.moodleTasks import router as moodletasks_router
 router = APIRouter()
 
 #Read all tasks
-@router.get("/tasks", response_model=List[TaskResponse])
+@router.get("/tasks")
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
     for task in tasks:
@@ -29,7 +29,7 @@ def get_tasks(db: Session = Depends(get_db)):
 
 
 #Read one task
-@router.get("/tasks/{task_id}", response_model=TaskResponse)
+@router.get("/tasks/{task_id}")
 def get_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if task is None:
@@ -40,7 +40,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 
 #Create task
-@router.post("/tasks", response_model=TaskResponse)
+@router.post("/tasks")
 def create_task(task_in: TaskCreate, db: Session = Depends(get_db)):
     new_task = Task(**task_in.model_dump())
     db.add(new_task)
@@ -52,7 +52,7 @@ def create_task(task_in: TaskCreate, db: Session = Depends(get_db)):
 
 
 #Update task
-@router.put("/tasks/{task_id}", response_model=TaskResponse)
+@router.put("/tasks/{task_id}")
 def update_task(task_id: int, task_update: TaskUpdate, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if task is None:
@@ -83,13 +83,13 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
 
 
 #Read all subtasks
-@router.get("/subtasks", response_model=List[SubtaskResponse])
+@router.get("/subtasks")
 def get_subtasks(db: Session = Depends(get_db)):
     return db.query(Subtask).all()
 
 
 #Read one subtask
-@router.get("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+@router.get("/subtasks/{subtask_id}")
 def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
     subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
     if subtask is None:
@@ -98,7 +98,7 @@ def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 
 #Create subtask
-@router.post("/subtasks", response_model=SubtaskResponse)
+@router.post("/subtasks")
 def create_subtask(subtask_in: SubtaskCreate, db: Session = Depends(get_db)):
     new_subtask = Subtask(**subtask_in.model_dump())
     db.add(new_subtask)
@@ -108,7 +108,7 @@ def create_subtask(subtask_in: SubtaskCreate, db: Session = Depends(get_db)):
 
 
 #update subtask
-@router.put("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+@router.put("/subtasks/{subtask_id}")
 def update_subtask(
     subtask_id: int, subtask_update: SubtaskUpdate, db: Session = Depends(get_db)
 ):

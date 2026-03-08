@@ -42,6 +42,8 @@ CREATE TABLE tasks (
     due_at TIMESTAMP,
     reminder_enabled BOOLEAN DEFAULT false,
 
+    reference_url VARCHAR(255) DEFAULT NULL,
+
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMP DEFAULT NULL,
@@ -90,6 +92,7 @@ CREATE TABLE moodletasks (
     reference_url VARCHAR(255),
     approved BOOLEAN DEFAULT NULL,
 
+    due_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     approved_at TIMESTAMP DEFAULT NULL,

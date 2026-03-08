@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LinkButton from './components/linkElement';
 
 const MoodleTasks = () => {
     const [tasks, setTasks] = useState([]);
@@ -30,14 +31,7 @@ const MoodleTasks = () => {
                 </span>
                 <h3 className="text-lg font-bold text-slate-900 mt-2">{task.title}</h3>
                 </div>
-                <a 
-                href={task.reference_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-slate-400 hover:text-indigo-600 transition-colors"
-                >
-                🔗 Open Moodle
-                </a>
+                <LinkButton url={task.reference_url}/>
             </div>
 
             <p className="text-slate-600 text-sm mb-4 italic">{task.course_name}</p>

@@ -85,6 +85,7 @@ def task_factory():
         tags=None,
         due_at=None,
         reminder_enabled=False,
+        reference_url=None
     ):
         if tags is None:
             tags = []
@@ -102,6 +103,7 @@ def task_factory():
             tags=tags,
             due_at=due_at,
             reminder_enabled=reminder_enabled,
+            reference_url=reference_url,
         )
 
     return create_task

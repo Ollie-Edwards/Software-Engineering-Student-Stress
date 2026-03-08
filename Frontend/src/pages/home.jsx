@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import LinkButton from '../components/linkElement';
 
 export default function Home({isAdding, setIsAdding}) {
   const [tasks, setTasks] = useState([]);
@@ -92,6 +93,10 @@ export default function Home({isAdding, setIsAdding}) {
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
                 <div className="flex items-center gap-1">
+
+                  {/* If available then render link */}
+                  <LinkButton url={task.reference_url} />
+
                   <button onClick={toggleComplete} className="focus:outline-none transition-transform active:scale-90">
                   {task.completed ? (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">

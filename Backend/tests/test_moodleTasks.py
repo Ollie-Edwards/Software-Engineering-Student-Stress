@@ -46,8 +46,8 @@ def test_approve_task(client, db, moodletask_factory):
 
     response = client.post(f"/moodletasks/{moodle_task.id}/approve")
     assert response.status_code == 200
-    assert response.json() == {"detail": "Task approved"}
-
+    assert response.json()["detail"] == "Task approved"
+    assert isinstance(response.json()["task_id"], int)
 
 def test_reject_task(client, db, moodletask_factory):
     moodle_task = moodletask_factory(
@@ -62,5 +62,4 @@ def test_reject_task(client, db, moodletask_factory):
 
     response = client.post(f"/moodletasks/{moodle_task.id}/reject")
     assert response.status_code == 200
-    assert response.json()["detail"] == "Task approved"
-    assert isinstance(response.json()["task_id"], int)
+    assert response.json() == {"detail": "Task rejected"}

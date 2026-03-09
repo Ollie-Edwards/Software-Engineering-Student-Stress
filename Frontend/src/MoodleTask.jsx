@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import LinkButton from "./components/linkElement";
 
 const MoodleTasks = () => {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+
+  const [removedIds, setRemovedIds] = useState([]);
 
   useEffect(() => {
     fetch("http://localhost:8000/moodletasks")
@@ -19,21 +19,46 @@ const MoodleTasks = () => {
 
   async function approveTask(moodleTaskId) {
     try {
-      const response = await fetch(`http://localhost:8000/moodletasks/${moodleTaskId}/approve`, {
-        method: "POST",
-      });
-      setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
-    } catch (err) {setError(err.message);}
+      const response = await fetch(
+        `http://localhost:8000/moodletasks/${moodleTaskId}/approve`,
+        {
+          method: "POST",
+        },
+      );
+
+      // Trigger animation
+      setRemovedIds((prev) => [...prev, moodleTaskId]);
+
+      // Wait to remove until after animation
+      setTimeout(() => {
+        setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
+        setRemovedIds((prev) => prev.filter((id) => id !== moodleTaskId));
+      }, 600);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function rejectTask(moodleTaskId) {
     try {
-      const response = await fetch(`http://localhost:8000/moodletasks/${moodleTaskId}/reject`, {
-        method: "POST",
-      });
-      // we may also want to add this to the rejected task list in future
-      setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
-    } catch (err) {setError(err.message);}
+      const response = await fetch(
+        `http://localhost:8000/moodletasks/${moodleTaskId}/reject`,
+        {
+          method: "POST",
+        },
+      );
+
+      // Trigger animation
+      setRemovedIds((prev) => [...prev, moodleTaskId]);
+
+      setTimeout(() => {
+        // Wait to remove until after animation
+        setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
+        setRemovedIds((prev) => prev.filter((id) => id !== moodleTaskId));
+      }, 400);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
@@ -44,6 +69,13 @@ const MoodleTasks = () => {
         {tasks.map((task) => (
           <div
             key={task.id}
+            style={{
+              transition: "all 0.4s ease",
+              opacity: removedIds.includes(task.id) ? 0 : 1,
+              maxHeight: removedIds.includes(task.id) ? "0px" : "200px",
+              backgroundColor: removedIds.includes(task.id) ? "#8CC152" : null,
+              overflow: "hidden",
+            }}
             className="bg-white border-l-4 border-orange-500 rounded-xl shadow-sm p-5 hover:shadow-md transition-shadow"
           >
             <div className="flex justify-between items-start mb-2">

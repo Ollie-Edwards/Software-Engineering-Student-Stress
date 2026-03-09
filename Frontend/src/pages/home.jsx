@@ -31,15 +31,42 @@ export default function Home({isAdding, setIsAdding}) {
   if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
 
-  const Taskcard = (task) => {
-    {/* High (8-10), Medium (4-7), Low (1-3)*/}
-          const isHigh = task.importance >= 8;
-          const isMedium = task.importance >= 4 && task.importance < 8;
+  const timeUntil = (dateStr) => {
+    if (!dateStr) return "No due date";
+    const diff = new Date(dateStr) - new Date();
+    if (diff < 0) return "Overdue";
 
-          const barColor = isHigh ? 'bg-red-500' : isMedium ? 'bg-amber-400' : 'bg-emerald-500';
-          const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
-          const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
-          const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days  = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+
+    if (weeks > 0)      return `${weeks}w ${days % 7}d`;
+    if (days > 0)       return `${days}d ${hours % 24}h`;
+    if (hours > 0)      return `${hours}h ${mins % 60}m`;
+    if (mins > 0)       return `${mins}m`;
+    return "Due now";
+  };
+
+  const Taskcard = (task) => {
+      const priorityColor = (p) => {
+        if (p <= 40)  return '#00cc00';
+        if (p <= 60)  return '#d6da17';
+        if (p <= 80)  return '#ff7300';
+        return '#ff0000';
+      };
+
+      const priorityBadgeBg = (p) => {
+        if (p <= 40)  return '#ccffcc';
+        if (p <= 60)  return '#eeffcc';
+        if (p <= 80)  return '#ffe5cc';
+        return '#ffcccc';
+      };
+
+        const barColor     = priorityColor(task.priority);
+        const badgeBg      = priorityBadgeBg(task.priority);
+        const badgeText    = '#000000'
+        const priorityLabel = task.priority >= 80 ? 'High' : task.priority >= 40 ? 'Medium' : 'Low';
 
           const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
@@ -82,12 +109,12 @@ export default function Home({isAdding, setIsAdding}) {
 
           return(
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
-            <div className={`w-2 shrink-0 ${barColor}`} />
+            <div style={{ backgroundColor: badgeBg, color: badgeText }} className={`w-2 shrink-0`} />
             <div className="p-5 flex-1 flex flex-col gap-3">
               {/* Title */}
               <div className ="flex justify-between items-start">
                 <div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block ${badgeBg} ${badgeText}`}>
+                  <span style={{ backgroundColor: badgeBg, color: badgeText }} className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block`}>
                     • {priorityLabel} ({task.priority})
                   </span>
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
@@ -130,9 +157,7 @@ export default function Home({isAdding, setIsAdding}) {
                 <p><strong>Status:</strong> {task.completed ? "Completed" : "Not Completed"}</p>
                 <p><strong>Importance:</strong> {task.importance}</p>
                 <p><strong>Length:</strong> {task.length}</p>
-                <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
-                <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
-                <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
+                <p><strong>Due:</strong> {timeUntil(task.due_at)}</p>
               </div>
           </div>
           </div>
@@ -246,8 +271,8 @@ export default function Home({isAdding, setIsAdding}) {
         {[...uncompletedTasks]
           .sort((a, b) => {
             return sortOrder === "desc" 
-              ? b.importance - a.importance
-              : a.importance - b.importance;
+              ? b.priority - a.priority
+              : a.priority - b.priority;
           })
           .map(task => Taskcard(task))}
       </div>  

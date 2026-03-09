@@ -23,6 +23,7 @@ def get_tasks(db: Session = Depends(get_db)):
     else:
         return moodleTasks
 
+
 @router.get("")  # default /moodletasks endpoint
 def get_tasks(db: Session = Depends(get_db)):
     moodleTasks = (
@@ -35,12 +36,14 @@ def get_tasks(db: Session = Depends(get_db)):
     else:
         return moodleTasks
 
+
 @router.post("/{task_id}/approve")
 def approve_task(task_id: int, db: Session = Depends(get_db)):
-    moodleTask = (db.query(MoodleTask)
-                    .filter(MoodleTask.id == task_id, MoodleTask.user_id == 2)
-                    .first()
-                )
+    moodleTask = (
+        db.query(MoodleTask)
+        .filter(MoodleTask.id == task_id, MoodleTask.user_id == 2)
+        .first()
+    )
 
     if not moodleTask:
         raise HTTPException(status_code=404, detail="Task Not Found")
@@ -54,8 +57,12 @@ def approve_task(task_id: int, db: Session = Depends(get_db)):
         description=f"{moodleTask.course_name} | {moodleTask.activity}",
         length=20,
         importance=5,
-        due_at=moodleTask.due_at if moodleTask.due_at else datetime.now() + timedelta(days=1),
-        reference_url=moodleTask.reference_url
+        due_at=(
+            moodleTask.due_at
+            if moodleTask.due_at
+            else datetime.now() + timedelta(days=1)
+        ),
+        reference_url=moodleTask.reference_url,
     )
 
     moodleTask.approved = True
@@ -67,12 +74,14 @@ def approve_task(task_id: int, db: Session = Depends(get_db)):
 
     return {"detail": "Task approved", "task_id": new_task.id}
 
+
 @router.post("/{task_id}/reject")
 def reject_task(task_id: int, db: Session = Depends(get_db)):
-    moodleTask = (db.query(MoodleTask)
-                    .filter(MoodleTask.id == task_id, MoodleTask.user_id == 2)
-                    .first()
-                 )
+    moodleTask = (
+        db.query(MoodleTask)
+        .filter(MoodleTask.id == task_id, MoodleTask.user_id == 2)
+        .first()
+    )
 
     if not moodleTask:
         raise HTTPException(status_code=404, detail="Task Not Found")

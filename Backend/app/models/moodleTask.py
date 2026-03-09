@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey, 
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
+from datetime import datetime, timedelta, UTC
 
 
 class MoodleTask(Base):
@@ -20,7 +21,7 @@ class MoodleTask(Base):
     approved = Column(Boolean, nullable=True)
     approved_at = Column(TIMESTAMP, nullable=True)
 
-    due_at = Column(TIMESTAMP, server_default=text("NOW() + INTERVAL '1 day'"))
+    due_at = Column(TIMESTAMP, default=lambda: datetime.now(UTC) + timedelta(days=1))
 
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

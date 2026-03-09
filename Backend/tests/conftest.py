@@ -110,14 +110,13 @@ def task_factory():
 @pytest.fixture
 def subtask_factory():
     def create_subtask(
-        task, title="Test Subtask", completed=False, status=False, order_index=1
+        task, title="Test Subtask", completed=False, order_index=1
     ):
 
         subtask = Subtask(
             task_id=task.id,
             title=title,
             completed=completed,
-            status=status,
             order_index=order_index,
         )
 

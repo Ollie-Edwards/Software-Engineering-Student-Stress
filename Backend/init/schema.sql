@@ -42,6 +42,8 @@ CREATE TABLE tasks (
     due_at TIMESTAMP,
     reminder_enabled BOOLEAN DEFAULT false,
 
+    reference_url VARCHAR(255) DEFAULT NULL,
+
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMP DEFAULT NULL,
@@ -87,9 +89,10 @@ CREATE TABLE moodletasks (
     course_name VARCHAR(255) NOT NULL,
     activity VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    reference_url VARCHAR(255),
+    reference_url VARCHAR(255) NOT NULL,
     approved BOOLEAN DEFAULT NULL,
 
+    due_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     approved_at TIMESTAMP DEFAULT NULL,
@@ -100,4 +103,4 @@ CREATE TABLE moodletasks (
         ON DELETE CASCADE
 );
 
-CREATE INDEX idx_moodletasks_user_id ON tasks(user_id);
+CREATE INDEX idx_moodletasks_user_id ON moodletasks(user_id);

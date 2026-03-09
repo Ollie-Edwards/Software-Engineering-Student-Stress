@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.task import Task
 from app.models.subtask import Subtask
 from app.priorityScoring import scoreTask
-from app.schemas import TaskResponse
+from app.schemas import TaskResponse, SubtaskResponse
 
 router = APIRouter()
 
@@ -125,3 +125,148 @@ def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
     if not subtask.completed:
         return {"message": "Subtask reopened"}
+
+
+# ============================================================
+#CRUD endpoints for tasks
+# For responses, read endpoints return TaskResponse.
+# Create/update accept JSON bodies directly using Body(...),
+# ============================================================
+
+
+# Read one task
+@router.get("/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Add computed priority so the returned object matches TaskResponse
+    task.priority = scoreTask(task)
+    return task
+
+
+# Create a new task
+@router.post("", response_model=TaskResponse)
+def create_task(
+    task_data: dict = Body(...), db: Session = Depends(get_db)
+):  # Body(...) accepts JSON request, **task_data unpacks it into the correct format
+    # Create a new Task database object from the request body
+    new_task = Task(**task_data)
+
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    # Add computed priority before returning it
+    new_task.priority = scoreTask(new_task)
+    return new_task
+
+
+# Update an existing task
+@router.put("/{task_id}", response_model=TaskResponse)
+def update_task(
+    task_id: int, task_data: dict = Body(...), db: Session = Depends(get_db)
+):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Update only the fields that were sent in the request body
+    for field, value in task_data.items():
+        setattr(task, field, value)
+
+    db.commit()
+    db.refresh(task)
+
+    # Add computed priority before returning it
+    task.priority = scoreTask(task)
+    return task
+
+
+# Delete a task
+@router.delete("/{task_id}")
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.delete(task)
+    db.commit()
+
+    return {"message": "Task deleted successfully"}
+
+
+# ============================================================
+# CRUD endpoints for subtasks
+# Read endpoints return SubtaskResponse.
+# Create/update accept JSON bodies directly using Body(...),
+# ============================================================
+
+
+# Read all subtasks
+@router.get("/subtasks", response_model=List[SubtaskResponse])
+def get_all_subtasks(db: Session = Depends(get_db)):
+    subtasks = db.query(Subtask).all()
+    return subtasks
+
+
+# Read one subtask
+@router.get("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    return subtask
+
+
+# Create a new subtask
+@router.post("/subtasks", response_model=SubtaskResponse)
+def create_subtask(subtask_data: dict = Body(...), db: Session = Depends(get_db)):
+    # Create a new Subtask database object from the request body
+    new_subtask = Subtask(**subtask_data)
+
+    db.add(new_subtask)
+    db.commit()
+    db.refresh(new_subtask)
+
+    return new_subtask
+
+
+# Update an existing subtask
+@router.put("/subtasks/{subtask_id}", response_model=SubtaskResponse)
+def update_subtask(
+    subtask_id: int, subtask_data: dict = Body(...), db: Session = Depends(get_db)
+):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    # Update only the fields that were sent in the request body
+    for field, value in subtask_data.items():
+        setattr(subtask, field, value)
+
+    db.commit()
+    db.refresh(subtask)
+
+    return subtask
+
+
+# Delete a subtask
+@router.delete("/subtasks/{subtask_id}")
+def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
+    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    db.delete(subtask)
+    db.commit()
+
+    return {"message": "Subtask deleted successfully"}

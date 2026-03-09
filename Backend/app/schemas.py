@@ -20,3 +20,15 @@ class TaskResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubtaskResponse(BaseModel):
+    id: int
+    task_id: int
+    title: str
+    order_index: int | None
+    completed: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

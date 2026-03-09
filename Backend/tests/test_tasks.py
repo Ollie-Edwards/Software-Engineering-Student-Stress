@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
+
 from app.models.task import Task
 from app.models.subtask import Subtask
 
 # GET "/tasks/"
 
 
-def test_retrieve_tasks(client, db, task_factory):
+def test_retreive_tasks(client, db, task_factory):
     # Create test data
     task1 = task_factory(title="Task 1")
     task2 = task_factory(title="Task 2")
@@ -185,7 +186,7 @@ def test_reopen_missing_task(client):
 # POST /subtasks/{subtask_id}/reopen
 
 
-def test_standard_reopen_subtask(client, db, task_factory, subtask_factory):
+def test_standard_reopen_task(client, db, task_factory, subtask_factory):
     task = task_factory()
 
     db.add(task)
@@ -261,6 +262,21 @@ def test_reopen_subtask_reopens_parent_task(client, db, task_factory, subtask_fa
 #Testing CRUD
 #==============================================
 
+# ==============================================
+# Testing CRUD
+# ==============================================
+
+
+def _create_test_user(db):
+    from datetime import date
+    from app.models.user import User
+
+    user = User(name="Test User", date_of_birth=date(2000, 1, 1))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 # GET "/tasks/{task_id}"
 
@@ -293,15 +309,17 @@ def test_get_missing_task(client):
 
 
 def test_create_task(client, db):
+    user = _create_test_user(db)
+
     payload = {
-        "user_id": 1,
+        "user_id": user.id,
         "title": "Created Task",
         "description": "Created from test",
         "completed": False,
         "importance": 7,
         "length": 60,
         "tags": ["test", "crud"],
-        "due_at": datetime.now(timezone.utc).isoformat(),
+        "due_at": None,
         "reminder_enabled": False,
     }
 

@@ -63,7 +63,6 @@ export default function Home({isAdding, setIsAdding}) {
         return '#ffcccc';
       };
 
-        const barColor     = priorityColor(task.priority);
         const badgeBg      = priorityBadgeBg(task.priority);
         const badgeText    = '#000000'
         const priorityLabel = task.priority >= 80 ? 'High' : task.priority >= 40 ? 'Medium' : 'Low';

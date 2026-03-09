@@ -67,7 +67,7 @@ def approve_task(task_id: int, db: Session = Depends(get_db)):
 
     return {"detail": "Task approved", "task_id": new_task.id}
 
-@router.delete("/{task_id}/reject")
+@router.post("/{task_id}/reject")
 def reject_task(task_id: int, db: Session = Depends(get_db)):
     moodleTask = (db.query(MoodleTask)
                     .filter(MoodleTask.id == task_id, MoodleTask.user_id == 2)

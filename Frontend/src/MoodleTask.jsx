@@ -17,6 +17,25 @@ const MoodleTasks = () => {
       .catch((err) => setError(err.message));
   }, []);
 
+  async function approveTask(moodleTaskId) {
+    try {
+      const response = await fetch(`http://localhost:8000/moodletasks/${moodleTaskId}/approve`, {
+        method: "POST",
+      });
+      setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
+    } catch (err) {setError(err.message);}
+  }
+
+  async function rejectTask(moodleTaskId) {
+    try {
+      const response = await fetch(`http://localhost:8000/moodletasks/${moodleTaskId}/reject`, {
+        method: "POST",
+      });
+      // we may also want to add this to the rejected task list in future
+      setTasks((prev) => prev.filter((task) => task.id !== moodleTaskId));
+    } catch (err) {setError(err.message);}
+  }
+
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Moodle Tasks</h1>
@@ -52,7 +71,7 @@ const MoodleTasks = () => {
               </div>
               <div className="text-right">
                 <button
-                  onClick={() => handleStatusUpdate(task.id, true)}
+                  onClick={() => approveTask(task.id)}
                   className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all border border-green-200"
                   title="Approve Task"
                 >
@@ -71,7 +90,7 @@ const MoodleTasks = () => {
                 </button>
 
                 <button
-                  onClick={() => handleStatusUpdate(task.id, false)}
+                  onClick={() => rejectTask(task.id)}
                   className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all border border-red-200"
                   title="Reject Task"
                 >

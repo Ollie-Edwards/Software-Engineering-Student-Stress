@@ -186,7 +186,7 @@ def test_reopen_missing_task(client):
 # POST /subtasks/{subtask_id}/reopen
 
 
-def test_standard_reopen_task(client, db, task_factory, subtask_factory):
+def test_standard_reopen_subtask(client, db, task_factory, subtask_factory):
     task = task_factory()
 
     db.add(task)
@@ -319,7 +319,7 @@ def test_create_task(client, db):
         "importance": 7,
         "length": 60,
         "tags": ["test", "crud"],
-        "due_at": None,
+        "due_at": datetime.now(timezone.utc).isoformat(),
         "reminder_enabled": False,
     }
 

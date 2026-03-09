@@ -133,84 +133,8 @@ def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 
 # ============================================================
-#CRUD endpoints for tasks
-# For responses, read endpoints return TaskResponse.
-# Create/update accept JSON bodies directly using Body(...),
-# ============================================================
-
-
-# Read one task
-@router.get("/{task_id}", response_model=TaskResponse)
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
-
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Add computed priority so the returned object matches TaskResponse
-    task.priority = scoreTask(task)
-    return task
-
-
-# Create a new task
-@router.post("", response_model=TaskResponse)
-def create_task(
-    task_data: dict = Body(...), db: Session = Depends(get_db)
-):  # Body(...) accepts JSON request, **task_data unpacks it into the correct format
-    # Create a new Task database object from the request body
-    new_task = Task(**task_data)
-
-    db.add(new_task)
-    db.commit()
-    db.refresh(new_task)
-
-    # Add computed priority before returning it
-    new_task.priority = scoreTask(new_task)
-    return new_task
-
-
-# Update an existing task
-@router.put("/{task_id}", response_model=TaskResponse)
-def update_task(
-    task_id: int, task_data: dict = Body(...), db: Session = Depends(get_db)
-):
-    task = db.query(Task).filter(Task.id == task_id).first()
-
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    # Update only the fields that were sent in the request body
-    for field, value in task_data.items():
-        setattr(task, field, value)
-
-    db.commit()
-    db.refresh(task)
-
-    # Add computed priority before returning it
-    task.priority = scoreTask(task)
-    return task
-
-
-# Delete a task
-@router.delete("/{task_id}")
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
-
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    db.delete(task)
-    db.commit()
-
-    return {"message": "Task deleted successfully"}
-
-
-# ============================================================
 # CRUD endpoints for subtasks
-# Read endpoints return SubtaskResponse.
-# Create/update accept JSON bodies directly using Body(...),
 # ============================================================
-
 
 # Read all subtasks
 @router.get("/subtasks", response_model=List[SubtaskResponse])
@@ -233,7 +157,6 @@ def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
 # Create a new subtask
 @router.post("/subtasks", response_model=SubtaskResponse)
 def create_subtask(subtask_data: dict = Body(...), db: Session = Depends(get_db)):
-    # Create a new Subtask database object from the request body
     new_subtask = Subtask(**subtask_data)
 
     db.add(new_subtask)
@@ -253,7 +176,6 @@ def update_subtask(
     if subtask is None:
         raise HTTPException(status_code=404, detail="Subtask not found")
 
-    # Update only the fields that were sent in the request body
     for field, value in subtask_data.items():
         setattr(subtask, field, value)
 
@@ -275,3 +197,72 @@ def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Subtask deleted successfully"}
+
+
+# ============================================================
+# CRUD endpoints for tasks
+# ============================================================
+
+# Read one task
+@router.get("/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.priority = scoreTask(task)
+    return task
+
+
+# Create a new task
+@router.post("", response_model=TaskResponse)
+def create_task(task_data: dict = Body(...), db: Session = Depends(get_db)):
+    # Convert due_at from JSON string into Python datetime if it is present
+    if task_data.get("due_at"):
+        task_data["due_at"] = datetime.fromisoformat(task_data["due_at"])
+
+    new_task = Task(**task_data)
+
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    new_task.priority = scoreTask(new_task)
+    return new_task
+
+
+# Update an existing task
+@router.put("/{task_id}", response_model=TaskResponse)
+def update_task(task_id: int, task_data: dict = Body(...), db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # Convert due_at from JSON string into Python datetime if it is present
+    if task_data.get("due_at"):
+        task_data["due_at"] = datetime.fromisoformat(task_data["due_at"])
+
+    for field, value in task_data.items():
+        setattr(task, field, value)
+
+    db.commit()
+    db.refresh(task)
+
+    task.priority = scoreTask(task)
+    return task
+
+
+# Delete a task
+@router.delete("/{task_id}")
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    db.delete(task)
+    db.commit()
+
+    return {"message": "Task deleted successfully"}

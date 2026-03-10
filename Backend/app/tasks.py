@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Header
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -13,14 +13,44 @@ from app.schemas import TaskResponse, SubtaskResponse
 router = APIRouter()
 
 
+def get_current_user_id(x_user_id: int = Header(...)) -> int:
+    return x_user_id
+
+
+def get_owned_task(task_id: int, current_user_id: int, db: Session) -> Task:
+    task = (
+        db.query(Task)
+        .filter(Task.id == task_id, Task.user_id == current_user_id)
+        .first()
+    )
+
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return task
+
+
+def get_owned_subtask(subtask_id: int, current_user_id: int, db: Session) -> Subtask:
+    subtask = (
+        db.query(Subtask)
+        .join(Task, Subtask.task_id == Task.id)
+        .filter(Subtask.id == subtask_id, Task.user_id == current_user_id)
+        .first()
+    )
+
+    if subtask is None:
+        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    return subtask
+
 @router.get(
     "",
     response_model=List[TaskResponse],
     summary="Retrieve all tasks",
-    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
+    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status for the current user.",
 )
-def get_tasks(db: Session = Depends(get_db)):
-    tasks = db.query(Task).all()
+def get_tasks(db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    tasks = db.query(Task).filter(Task.user_id == current_user_id).all()
 
     for task in tasks:
         task.priority = scoreTask(task)
@@ -30,11 +60,9 @@ def get_tasks(db: Session = Depends(get_db)):
 
 # Marking a task as complete
 @router.post("/task/{task_id}/complete")
-def complete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+def complete_task(task_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    task = get_owned_task(task_id, current_user_id, db)
 
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
 
     if task.completed:
         raise HTTPException(status_code=400, detail="Task is already completed")
@@ -57,11 +85,9 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 
 # Marking a subtask as complete
 @router.post("/subtask/{subtask_id}/complete")
-def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
-    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+def complete_subtask(subtask_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    subtask = get_owned_subtask(subtask_id, current_user_id, db)
 
-    if subtask is None:
-        raise HTTPException(status_code=404, detail="Subtask not found")
 
     if subtask.completed:
         raise HTTPException(status_code=400, detail="Subtask is already completed")
@@ -86,11 +112,9 @@ def complete_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 # Reopen a task
 @router.post("/task/{task_id}/reopen")
-def reopen_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+def reopen_task(task_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    task = get_owned_task(task_id, current_user_id, db)
 
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
 
     if not task.completed:
         raise HTTPException(status_code=400, detail="Task already open")
@@ -107,11 +131,9 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
 
 # Reopen a subtask
 @router.post("/subtask/{subtask_id}/reopen")
-def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
-    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+def reopen_subtask(subtask_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    subtask = get_owned_subtask(subtask_id, current_user_id, db)
 
-    if subtask is None:
-        raise HTTPException(status_code=404, detail="Subtask not found")
 
     if not subtask.completed:
         raise HTTPException(status_code=400, detail="Subtask already open")
@@ -138,25 +160,35 @@ def reopen_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 # Read all subtasks
 @router.get("/subtasks", response_model=List[SubtaskResponse])
-def get_all_subtasks(db: Session = Depends(get_db)):
-    subtasks = db.query(Subtask).all()
+def get_all_subtasks(db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    subtasks = (db.query(Subtask).join(Task, Subtask.task_id == Task.id).filter(Task.user_id == current_user_id).all())
     return subtasks
 
 
 # Read one subtask
 @router.get("/subtasks/{subtask_id}", response_model=SubtaskResponse)
-def get_subtask(subtask_id: int, db: Session = Depends(get_db)):
-    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+def get_subtask(subtask_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    subtask = get_owned_subtask(subtask_id, current_user_id, db)
 
-    if subtask is None:
-        raise HTTPException(status_code=404, detail="Subtask not found")
 
     return subtask
 
 
 # Create a new subtask
 @router.post("/subtasks", response_model=SubtaskResponse)
-def create_subtask(subtask_data: dict = Body(...), db: Session = Depends(get_db)):
+def create_subtask(subtask_data: dict = Body(...), db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+
+    
+    parent_task_id = subtask_data.get("task_id")
+
+ 
+    if parent_task_id is None:
+        raise HTTPException(status_code=400, detail="task_id is required")
+
+   
+    get_owned_task(parent_task_id, current_user_id, db)
+
+
     new_subtask = Subtask(**subtask_data)
 
     db.add(new_subtask)
@@ -169,12 +201,14 @@ def create_subtask(subtask_data: dict = Body(...), db: Session = Depends(get_db)
 # Update an existing subtask
 @router.put("/subtasks/{subtask_id}", response_model=SubtaskResponse)
 def update_subtask(
-    subtask_id: int, subtask_data: dict = Body(...), db: Session = Depends(get_db)
+    subtask_id: int, subtask_data: dict = Body(...), db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)
 ):
-    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+    subtask = get_owned_subtask(subtask_id, current_user_id, db)
 
-    if subtask is None:
-        raise HTTPException(status_code=404, detail="Subtask not found")
+
+    if "task_id" in subtask_data:
+        get_owned_task(subtask_data["task_id"], current_user_id, db)
+
 
     for field, value in subtask_data.items():
         setattr(subtask, field, value)
@@ -187,11 +221,9 @@ def update_subtask(
 
 # Delete a subtask
 @router.delete("/subtasks/{subtask_id}")
-def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
-    subtask = db.query(Subtask).filter(Subtask.id == subtask_id).first()
+def delete_subtask(subtask_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id),):
+    subtask = get_owned_subtask(subtask_id, current_user_id, db)
 
-    if subtask is None:
-        raise HTTPException(status_code=404, detail="Subtask not found")
 
     db.delete(subtask)
     db.commit()
@@ -205,11 +237,9 @@ def delete_subtask(subtask_id: int, db: Session = Depends(get_db)):
 
 # Read one task
 @router.get("/{task_id}", response_model=TaskResponse)
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+def get_task(task_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    task = get_owned_task(task_id, current_user_id, db)
 
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
 
     task.priority = scoreTask(task)
     return task
@@ -217,11 +247,12 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 # Create a new task
 @router.post("", response_model=TaskResponse)
-def create_task(task_data: dict = Body(...), db: Session = Depends(get_db)):
+def create_task(task_data: dict = Body(...), db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
     # Convert due_at from JSON string into Python datetime if it is present
     if task_data.get("due_at"):
         task_data["due_at"] = datetime.fromisoformat(task_data["due_at"])
 
+    task_data["user_id"] = current_user_id
     new_task = Task(**task_data)
 
     db.add(new_task)
@@ -234,15 +265,17 @@ def create_task(task_data: dict = Body(...), db: Session = Depends(get_db)):
 
 # Update an existing task
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(task_id: int, task_data: dict = Body(...), db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+def update_task(task_id: int, task_data: dict = Body(...), db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    task = get_owned_task(task_id, current_user_id, db)
 
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+
 
     # Convert due_at from JSON string into Python datetime if it is present
     if task_data.get("due_at"):
         task_data["due_at"] = datetime.fromisoformat(task_data["due_at"])
+
+    if "user_id" in task_data:
+        del task_data["user_id"]
 
     for field, value in task_data.items():
         setattr(task, field, value)
@@ -256,11 +289,9 @@ def update_task(task_id: int, task_data: dict = Body(...), db: Session = Depends
 
 # Delete a task
 @router.delete("/{task_id}")
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter(Task.id == task_id).first()
+def delete_task(task_id: int, db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)):
+    task = get_owned_task(task_id, current_user_id, db)
 
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
 
     db.delete(task)
     db.commit()

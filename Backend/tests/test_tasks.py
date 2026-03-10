@@ -3,13 +3,10 @@ from datetime import datetime, timezone
 from app.models.task import Task
 from app.models.subtask import Subtask
 
-
-
 TEST_USER_ID = 1
 
 
 OTHER_USER_ID = 2
-
 
 
 def auth_headers(user_id=TEST_USER_ID):
@@ -21,18 +18,16 @@ def auth_headers(user_id=TEST_USER_ID):
 
 def test_retreive_tasks(client, db, task_factory):
     # Create test data
-    
+
     task1 = task_factory(title="Task 1", user_id=TEST_USER_ID)
-    
+
     task2 = task_factory(title="Task 2", user_id=TEST_USER_ID)
-    
+
     task3 = task_factory(title="Other User Task", user_id=OTHER_USER_ID)
 
-    
     db.add_all([task1, task2, task3])
     db.commit()
 
-    
     response = client.get("/tasks", headers=auth_headers())
 
     assert response.status_code == 200
@@ -40,10 +35,9 @@ def test_retreive_tasks(client, db, task_factory):
     data = response.json()
 
     assert isinstance(data, list)
-    
+
     assert len(data) == 2
 
-    
     for task in data:
         assert task["user_id"] == TEST_USER_ID
 
@@ -59,54 +53,44 @@ def test_retreive_tasks(client, db, task_factory):
 
 
 def test_standard_complete_task(client, db, task_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/complete", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/complete", headers=auth_headers())
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
 
 
 def test_double_complete_task(client, db, task_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/complete", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/complete", headers=auth_headers())
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/complete", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/complete", headers=auth_headers())
     assert response.status_code == 400
     assert response.json() == {"detail": "Task is already completed"}
 
 
 def test_complete_missing_task(client):
-    
+
     response = client.post("/tasks/task/234/complete", headers=auth_headers())
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
 
-
 def test_complete_other_users_task_forbidden_by_ownership(client, db, task_factory):
-    
+
     task = task_factory(user_id=OTHER_USER_ID)
 
     db.add(task)
@@ -117,16 +101,15 @@ def test_complete_other_users_task_forbidden_by_ownership(client, db, task_facto
         f"/tasks/task/{task.id}/complete", headers=auth_headers(TEST_USER_ID)
     )
 
-    
     assert response.status_code == 404
-    
+
     assert response.json() == {"detail": "Task not found"}
 
 
 def test_subtasks_are_completed_on_task_completion(
     client, db, task_factory, subtask_factory
 ):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
@@ -139,10 +122,7 @@ def test_subtasks_are_completed_on_task_completion(
     db.add_all([subtask1, subtask2])
     db.commit()
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/complete", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/complete", headers=auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"message": "Task completed"}
@@ -157,7 +137,7 @@ def test_subtasks_are_completed_on_task_completion(
 
 
 def test_standard_complete_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
@@ -169,7 +149,6 @@ def test_standard_complete_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/complete", headers=auth_headers()
     )
@@ -178,7 +157,7 @@ def test_standard_complete_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_double_complete_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
@@ -190,14 +169,12 @@ def test_double_complete_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/complete", headers=auth_headers()
     )
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask completed"}
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/complete", headers=auth_headers()
     )
@@ -206,7 +183,7 @@ def test_double_complete_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_complete_missing_subtask(client):
-    
+
     response = client.post("/tasks/subtask/234/complete", headers=auth_headers())
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
@@ -216,46 +193,37 @@ def test_complete_missing_subtask(client):
 
 
 def test_standard_reopen_task(client, db, task_factory):
-    
+
     task = task_factory(completed=True, user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/reopen", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/reopen", headers=auth_headers())
     assert response.status_code == 200
     assert response.json() == {"message": "Task reopened"}
 
 
 def test_double_reopen_task(client, db, task_factory):
-    
+
     task = task_factory(completed=True, user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/reopen", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/reopen", headers=auth_headers())
     assert response.status_code == 200
     assert response.json() == {"message": "Task reopened"}
 
-    
-    response = client.post(
-        f"/tasks/task/{task.id}/reopen", headers=auth_headers()
-    )
+    response = client.post(f"/tasks/task/{task.id}/reopen", headers=auth_headers())
     assert response.status_code == 400
     assert response.json() == {"detail": "Task already open"}
 
 
 def test_reopen_missing_task(client):
-    
+
     response = client.post("/tasks/task/234/reopen", headers=auth_headers())
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
@@ -265,7 +233,7 @@ def test_reopen_missing_task(client):
 
 
 def test_standard_reopen_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
@@ -277,7 +245,6 @@ def test_standard_reopen_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/reopen", headers=auth_headers()
     )
@@ -286,7 +253,7 @@ def test_standard_reopen_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
 
     db.add(task)
@@ -298,14 +265,12 @@ def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
     db.add(subtask)
     db.commit()
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/reopen", headers=auth_headers()
     )
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask reopened"}
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/reopen", headers=auth_headers()
     )
@@ -314,14 +279,14 @@ def test_double_reopen_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_reopen_missing_subtask(client):
-    
+
     response = client.post("/tasks/subtask/234/reopen", headers=auth_headers())
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
 
 
 def test_reopen_subtask_reopens_parent_task(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(completed=True, user_id=TEST_USER_ID)
 
     db.add(task)
@@ -337,7 +302,6 @@ def test_reopen_subtask_reopens_parent_task(client, db, task_factory, subtask_fa
     assert task.completed is True
     assert subtask.completed is True
 
-    
     response = client.post(
         f"/tasks/subtask/{subtask.id}/reopen", headers=auth_headers()
     )
@@ -372,14 +336,13 @@ def _create_test_user(db):
 
 
 def test_get_single_task(client, db, task_factory):
-    
+
     task = task_factory(title="Single Task", user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
     response = client.get(f"/tasks/{task.id}", headers=auth_headers())
 
     assert response.status_code == 200
@@ -391,7 +354,7 @@ def test_get_single_task(client, db, task_factory):
 
 
 def test_get_missing_task(client):
-    
+
     response = client.get("/tasks/9999", headers=auth_headers())
 
     assert response.status_code == 404
@@ -405,7 +368,6 @@ def test_create_task(client, db):
     user = _create_test_user(db)
 
     payload = {
-        
         "user_id": 999,
         "title": "Created Task",
         "description": "Created from test",
@@ -417,10 +379,7 @@ def test_create_task(client, db):
         "reminder_enabled": False,
     }
 
-    
-    response = client.post(
-        "/tasks", json=payload, headers=auth_headers(user.id)
-    )
+    response = client.post("/tasks", json=payload, headers=auth_headers(user.id))
 
     assert response.status_code == 200
 
@@ -432,13 +391,13 @@ def test_create_task(client, db):
     assert data["tags"] == ["test", "crud"]
     assert "id" in data
     assert "priority" in data
-    
+
     assert data["user_id"] == user.id
 
     created_task = db.query(Task).filter(Task.id == data["id"]).first()
     assert created_task is not None
     assert created_task.title == "Created Task"
-    
+
     assert created_task.user_id == user.id
 
 
@@ -446,8 +405,10 @@ def test_create_task(client, db):
 
 
 def test_update_task(client, db, task_factory):
-    
-    task = task_factory(title="Old Title", importance=3, length=30, user_id=TEST_USER_ID)
+
+    task = task_factory(
+        title="Old Title", importance=3, length=30, user_id=TEST_USER_ID
+    )
 
     db.add(task)
     db.commit()
@@ -459,10 +420,7 @@ def test_update_task(client, db, task_factory):
         "length": 120,
     }
 
-    
-    response = client.put(
-        f"/tasks/{task.id}", json=payload, headers=auth_headers()
-    )
+    response = client.put(f"/tasks/{task.id}", json=payload, headers=auth_headers())
 
     assert response.status_code == 200
 
@@ -481,36 +439,30 @@ def test_update_task(client, db, task_factory):
 def test_update_missing_task(client):
     payload = {"title": "Does not exist"}
 
-    
     response = client.put("/tasks/9999", json=payload, headers=auth_headers())
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Task not found"}
 
 
-
 def test_update_other_users_task_forbidden_by_ownership(client, db, task_factory):
-    
+
     task = task_factory(title="Locked Task", user_id=OTHER_USER_ID)
 
-    
     db.add(task)
-    
+
     db.commit()
-    
+
     db.refresh(task)
 
-    
     payload = {"title": "Should Not Work"}
 
-    
     response = client.put(
         f"/tasks/{task.id}", json=payload, headers=auth_headers(TEST_USER_ID)
     )
 
-    
     assert response.status_code == 404
-    
+
     assert response.json() == {"detail": "Task not found"}
 
 
@@ -518,14 +470,13 @@ def test_update_other_users_task_forbidden_by_ownership(client, db, task_factory
 
 
 def test_delete_task(client, db, task_factory):
-    
+
     task = task_factory(title="Delete Me", user_id=TEST_USER_ID)
 
     db.add(task)
     db.commit()
     db.refresh(task)
 
-    
     response = client.delete(f"/tasks/{task.id}", headers=auth_headers())
 
     assert response.status_code == 200
@@ -536,7 +487,7 @@ def test_delete_task(client, db, task_factory):
 
 
 def test_delete_missing_task(client):
-    
+
     response = client.delete("/tasks/9999", headers=auth_headers())
 
     assert response.status_code == 404
@@ -547,34 +498,32 @@ def test_delete_missing_task(client):
 
 
 def test_get_all_subtasks(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
-    
+
     other_task = task_factory(user_id=OTHER_USER_ID, title="Other Task")
-    
+
     db.add_all([task, other_task])
     db.commit()
     db.refresh(task)
-    
+
     db.refresh(other_task)
 
     subtask1 = subtask_factory(task, title="Subtask 1", order_index=1)
     subtask2 = subtask_factory(task, title="Subtask 2", order_index=2)
-    
+
     subtask3 = subtask_factory(other_task, title="Other User Subtask", order_index=1)
 
-    
     db.add_all([subtask1, subtask2, subtask3])
     db.commit()
 
-    
     response = client.get("/tasks/subtasks", headers=auth_headers())
 
     assert response.status_code == 200
 
     data = response.json()
     assert isinstance(data, list)
-    
+
     assert len(data) == 2
 
     first_subtask = data[0]
@@ -589,7 +538,7 @@ def test_get_all_subtasks(client, db, task_factory, subtask_factory):
 
 
 def test_get_single_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
     db.add(task)
     db.commit()
@@ -601,7 +550,6 @@ def test_get_single_subtask(client, db, task_factory, subtask_factory):
     db.commit()
     db.refresh(subtask)
 
-    
     response = client.get(f"/tasks/subtasks/{subtask.id}", headers=auth_headers())
 
     assert response.status_code == 200
@@ -613,7 +561,7 @@ def test_get_single_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_get_missing_subtask(client):
-    
+
     response = client.get("/tasks/subtasks/9999", headers=auth_headers())
 
     assert response.status_code == 404
@@ -624,7 +572,7 @@ def test_get_missing_subtask(client):
 
 
 def test_create_subtask(client, db, task_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
     db.add(task)
     db.commit()
@@ -637,10 +585,7 @@ def test_create_subtask(client, db, task_factory):
         "order_index": 1,
     }
 
-    
-    response = client.post(
-        "/tasks/subtasks", json=payload, headers=auth_headers()
-    )
+    response = client.post("/tasks/subtasks", json=payload, headers=auth_headers())
 
     assert response.status_code == 200
 
@@ -660,7 +605,7 @@ def test_create_subtask(client, db, task_factory):
 
 
 def test_update_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
     db.add(task)
     db.commit()
@@ -677,7 +622,6 @@ def test_update_subtask(client, db, task_factory, subtask_factory):
         "order_index": 2,
     }
 
-    
     response = client.put(
         f"/tasks/subtasks/{subtask.id}", json=payload, headers=auth_headers()
     )
@@ -699,10 +643,7 @@ def test_update_subtask(client, db, task_factory, subtask_factory):
 def test_update_missing_subtask(client):
     payload = {"title": "Does not exist"}
 
-    
-    response = client.put(
-        "/tasks/subtasks/9999", json=payload, headers=auth_headers()
-    )
+    response = client.put("/tasks/subtasks/9999", json=payload, headers=auth_headers())
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Subtask not found"}
@@ -712,7 +653,7 @@ def test_update_missing_subtask(client):
 
 
 def test_delete_subtask(client, db, task_factory, subtask_factory):
-    
+
     task = task_factory(user_id=TEST_USER_ID)
     db.add(task)
     db.commit()
@@ -723,10 +664,7 @@ def test_delete_subtask(client, db, task_factory, subtask_factory):
     db.commit()
     db.refresh(subtask)
 
-    
-    response = client.delete(
-        f"/tasks/subtasks/{subtask.id}", headers=auth_headers()
-    )
+    response = client.delete(f"/tasks/subtasks/{subtask.id}", headers=auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"message": "Subtask deleted successfully"}
@@ -736,7 +674,7 @@ def test_delete_subtask(client, db, task_factory, subtask_factory):
 
 
 def test_delete_missing_subtask(client):
- 
+
     response = client.delete("/tasks/subtasks/9999", headers=auth_headers())
 
     assert response.status_code == 404

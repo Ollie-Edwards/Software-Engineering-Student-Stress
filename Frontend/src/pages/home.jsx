@@ -1,36 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function Home({isAdding, setIsAdding}) {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const uncompletedTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
-  const [sortOrder, setSortOrder] = useState("desc");
-  const [showSubtasks, setShowSubtasks] = useState(false);
-
-    useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const res = await fetch("http://localhost:8000/tasks");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setTasks(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTasks();
-  }, []);
-
-  if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-
-  const Taskcard = (task) => {
+const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}
           const isHigh = task.importance >= 8;
           const isMedium = task.importance >= 4 && task.importance < 8;
@@ -39,6 +9,8 @@ export default function Home({isAdding, setIsAdding}) {
           const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
           const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
           const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+
+          const [showSubtasks, setShowSubtasks] = useState(false);
 
           const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
@@ -73,13 +45,14 @@ export default function Home({isAdding, setIsAdding}) {
             const response = await fetch(`http://localhost:8000/subtask/${subtask.id}/${endpoint}`, {
               method: 'POST',
             });
-            if (response.ok) onRefresh(); // Refresh the list to see parent task auto-complete
+            if (response.ok) fetchTasks(); 
           } catch (err) {
             console.error("Fetch error:", err);
           }
           };
 
           return(
+          <React.Fragment key={task.id}>
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
             <div className={`w-2 shrink-0 ${barColor}`} />
             <div className="p-5 flex-1 flex flex-col gap-3">
@@ -131,8 +104,74 @@ export default function Home({isAdding, setIsAdding}) {
               </div>
           </div>
           </div>
-          )
-  }
+
+          {showSubtasks && (
+  <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 rounded-b-xl p-4 space-y-3">
+    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Subtasks</h4>
+    
+    {task.subtasks && task.subtasks.length > 0 ? (
+      task.subtasks.map((sub) => (
+        <div  
+          key={sub.id} 
+          className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+              checked={sub.completed}
+              onChange={() => toggleSubtask(sub)}
+              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            />
+            <span className={`text-sm font-medium ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+              {sub.title}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+              {sub.completed ? 'Done' : 'In Progress'}
+            </span>
+          </div>
+        </div>
+      ))
+    ) : (
+      <p className="text-sm text-slate-400 italic">No subtasks found for this task.</p>
+    )}
+  </div>
+)}
+</React.Fragment>
+          );
+  };
+
+export default function Home({isAdding, setIsAdding}) {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const uncompletedTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+  const [sortOrder, setSortOrder] = useState("desc");
+
+    async function fetchTasks() {
+      try {
+        const res = await fetch("http://localhost:8000/tasks");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setTasks(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+
 
   const handleUpdateTask = async (e) => {
     e.preventDefault();
@@ -244,7 +283,14 @@ export default function Home({isAdding, setIsAdding}) {
               ? b.importance - a.importance
               : a.importance - b.importance;
           })
-          .map(task => Taskcard(task))}
+          .map(task => <Taskcard 
+            key={task.id}
+            task={task} 
+            setTasks={setTasks}
+            setEditingTask={setEditingTask}
+            handleDeleteTask={handleDeleteTask}
+            fetchTasks={fetchTasks}
+          />)}
       </div>  
 
       {completedTasks.length > 0 && (
@@ -260,7 +306,14 @@ export default function Home({isAdding, setIsAdding}) {
                   ? b.importance - a.importance
                   : a.importance - b.importance;
               })
-              .map(task => Taskcard(task))}
+              .map(task => <Taskcard 
+      key={task.id}
+      task={task} 
+      setTasks={setTasks}
+      setEditingTask={setEditingTask}
+      handleDeleteTask={handleDeleteTask}
+      fetchTasks={fetchTasks} 
+    />)}
           </div>
         </div>
       )}

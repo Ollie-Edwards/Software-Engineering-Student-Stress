@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import LinkButton from '../components/linkElement';
 
 const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}
@@ -65,6 +66,7 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
                 <div className="flex items-center gap-1">
+                  <LinkButton url={task.reference_url} />
                   <button onClick={toggleComplete} className="focus:outline-none transition-transform active:scale-90">
                   {task.completed ? (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
@@ -227,7 +229,7 @@ export default function Home({isAdding, setIsAdding}) {
       if (response.ok) {
         const createdTask = await response.json();
         setTasks(prev => [...prev, createdTask]);
-        setShowCreateModal(false);
+        setIsAdding(false);
       }
       } catch (error) {
       console.error("Task creation failed:", error);

@@ -13,12 +13,7 @@ from app.schemas import TaskResponse
 router = APIRouter()
 
 
-@router.get(
-    "",
-    response_model=List[TaskResponse],
-    summary="Retrieve all tasks",
-    description="Fetches a list of all tasks from the database, including their ID, title, description, and completion status.",
-)
+@router.get("")
 def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(Task).all()
 

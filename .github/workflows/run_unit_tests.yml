@@ -1,5 +1,5 @@
-name: Run Unit Tests
-run-name: ${{ github.actor }} is running unit tests
+name: Run Backend Tests
+run-name: ${{ github.actor }} is running backend unit tests
 on: [push]
 
 jobs:

@@ -2,6 +2,16 @@ from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 
+class SubtaskResponse(BaseModel):
+    id: int
+    task_id: int
+    title: str
+    order_index: int | None
+    completed: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 class TaskResponse(BaseModel):
     id: int
@@ -18,17 +28,7 @@ class TaskResponse(BaseModel):
     priority: float  # Determines the task priority score
     created_at: datetime
     updated_at: datetime
+    subtasks: List[SubtaskResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
 
-
-class SubtaskResponse(BaseModel):
-    id: int
-    task_id: int
-    title: str
-    order_index: int | None
-    completed: bool
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)

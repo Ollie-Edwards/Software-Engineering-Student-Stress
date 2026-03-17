@@ -3,6 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Body, Header
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 
 from app.database import get_db
 from app.models.task import Task
@@ -57,7 +58,7 @@ def get_owned_subtask(subtask_id: int, current_user_id: int, db: Session) -> Sub
 def get_tasks(
     db: Session = Depends(get_db), current_user_id: int = Depends(get_current_user_id)
 ):
-    tasks = db.query(Task).filter(Task.user_id == current_user_id).all()
+    tasks = db.query(Task).options(joinedload(Task.subtasks)).filter(Task.user_id == current_user_id).all()
 
     for task in tasks:
         task.priority = scoreTask(task)
@@ -325,7 +326,7 @@ def update_task(
     for field, value in task_data.items():
         setattr(task, field, value)
 
-    db.commit()
+    db.commit() 
     db.refresh(task)
 
     task.priority = scoreTask(task)

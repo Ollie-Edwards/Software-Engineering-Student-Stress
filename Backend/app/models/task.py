@@ -29,6 +29,7 @@ class Task(Base):
     length = Column(Integer)
     tags = Column(JSON)
     due_at = Column(TIMESTAMP)
+    reference_url = Column(String(255), nullable=True)
     reminder_enabled = Column(Boolean, nullable=False, default=False)
 
     created_at = Column(TIMESTAMP, server_default=func.now())

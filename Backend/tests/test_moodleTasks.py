@@ -31,3 +31,35 @@ def test_get_moodle_tasks_only_returns_correct_user(client, db, moodletask_facto
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
+
+
+def test_approve_task(client, db, moodletask_factory):
+    moodle_task = moodletask_factory(
+        user_id=2,
+        course_name="CM22009 - Machine Learning",
+        activity="Lab",
+        title="Review Lab Solutions",
+        reference_url="https://example.com/test",
+    )
+    db.add(moodle_task)
+    db.commit()
+
+    response = client.post(f"/moodletasks/{moodle_task.id}/approve")
+    assert response.status_code == 200
+    assert response.json()["detail"] == "Task approved"
+    assert isinstance(response.json()["task_id"], int)
+
+def test_reject_task(client, db, moodletask_factory):
+    moodle_task = moodletask_factory(
+        user_id=2,
+        course_name="CM22009 - Machine Learning",
+        activity="Lab",
+        title="Review Lab Solutions",
+        reference_url="https://example.com/test",
+    )
+    db.add(moodle_task)
+    db.commit()
+
+    response = client.post(f"/moodletasks/{moodle_task.id}/reject")
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Task rejected"}

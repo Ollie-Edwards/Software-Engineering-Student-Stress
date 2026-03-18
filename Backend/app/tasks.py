@@ -119,6 +119,7 @@ def complete_subtask(
 
     db.commit()
     db.refresh(subtask)
+    db.refresh(parent_task)
 
     if subtask.completed:
         return {"message": "Subtask completed"}
@@ -138,6 +139,10 @@ def reopen_task(
 
     task.completed = False
     task.completed_at = None
+
+    for subtask in task.subtasks:
+        subtask.completed = False
+        subtask.completed_at = None
 
     db.commit()
     db.refresh(task)
@@ -220,7 +225,14 @@ def create_subtask(
 
     get_owned_task(parent_task_id, current_user_id, db)
 
-    new_subtask = Subtask(**subtask_data)
+    existing_subtasks_count = db.query(Subtask).filter(Subtask.task_id == parent_task_id).count()
+
+    new_subtask = Subtask(
+        title=subtask_data.get("title"),
+        task_id=parent_task_id,
+        completed=False,
+        order_index=existing_subtasks_count
+    )
 
     db.add(new_subtask)
     db.commit()

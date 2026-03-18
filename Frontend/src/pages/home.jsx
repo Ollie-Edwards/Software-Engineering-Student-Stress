@@ -12,6 +12,10 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
           const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
 
           const [showSubtasks, setShowSubtasks] = useState(false);
+          const [editingSubtaskId, setEditingSubtaskId] = useState(null);
+          const [tempSubtaskTitle, setTempSubtaskTitle] = useState("");
+          const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+          const [isAddingSubtask, setIsAddingSubtask] = useState(false);
 
           const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
@@ -21,7 +25,7 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
                   const newStatus = !currentlyCompleted;
 
                   setTasks(prevTasks => prevTasks.map(t => 
-                    t.id === task.id ? { ...t, completed: newStatus } : t
+                    t.id === task.id ? { ...t, completed: newStatus, subtasks: t.subtasks.map(st => ({ ...st, completed: newStatus })) } : t
                   ));
                   const endpoint = newStatus ? 'complete' : 'reopen';
                   const url = `http://localhost:8000/tasks/task/${task.id}/${endpoint}`;
@@ -35,7 +39,7 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
                   } catch (error) {
                     console.error(error);
                     setTasks(prevTasks => prevTasks.map(t => 
-                    t.id === task.id ? { ...t, completed: currentlyCompleted } : t
+                    t.id === task.id ? { ...t, completed: currentlyCompleted, subtasks: t.subtasks.map(st => ({ ...st, completed: currentlyCompleted }))} : t
                     ));
                   }
             }
@@ -71,6 +75,69 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
         }
     } catch (error) {
         console.error("Error deleting subtask:", error);
+    }
+};
+
+const handleUpdateSubtask = async (subtaskId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-User-Id': '1' 
+      },
+      body: JSON.stringify({ title: tempSubtaskTitle })
+    });
+
+    if (response.ok) {
+      setTasks(prev => prev.map(t => {
+        if (t.id === task.id) {
+          return {
+            ...t,
+            subtasks: t.subtasks.map(st => 
+              st.id === subtaskId ? { ...st, title: tempSubtaskTitle } : st
+            )
+          };
+        }
+        return t;
+      }));
+      setEditingSubtaskId(null);
+    }
+  } catch (err) {
+    console.error("Failed to update subtask:", err);
+    }
+  };
+
+  const handleAddSubtask = async () => {
+    if (!newSubtaskTitle.trim()) return;
+
+    try {
+        const response = await fetch(`http://localhost:8000/tasks/subtasks`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-User-Id': '1' 
+            },
+            body: JSON.stringify({ 
+                title: newSubtaskTitle,
+                task_id: task.id,
+                completed: false 
+            })
+        });
+
+        if (response.ok) {
+            const createdSubtask = await response.json();
+            // Update local state
+            setTasks(prev => prev.map(t => 
+                t.id === task.id 
+                ? { ...t, subtasks: [...t.subtasks, createdSubtask] } 
+                : t
+            ));
+            setNewSubtaskTitle("");
+            setIsAddingSubtask(false);
+        }
+    } catch (err) {
+        console.error("Failed to add subtask:", err);
     }
 };
 
@@ -135,37 +202,93 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
     
     {task.subtasks && task.subtasks.length > 0 ? (
       task.subtasks.map((sub) => (
-        <div  
-          key={sub.id} 
-          className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-all"
+  <div  
+    key={sub.id} 
+    className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-all"
+  >
+    <div className="flex items-center gap-3 flex-1">
+      <input 
+        type="checkbox" 
+        checked={sub.completed}
+        onChange={() => toggleSubtask(sub)}
+        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+      />
+      
+      {editingSubtaskId === sub.id ? (
+        <input 
+          autoFocus
+          className="text-sm font-medium text-slate-700 border-b border-indigo-500 outline-none flex-1"
+          value={tempSubtaskTitle}
+          onChange={(e) => setTempSubtaskTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleUpdateSubtask(sub.id);
+            if (e.key === 'Escape') setEditingSubtaskId(null);
+          }}
+        />
+      ) : (
+        <span 
+          onClick={() => {
+            setEditingSubtaskId(sub.id);
+            setTempSubtaskTitle(sub.title);
+          }}
+          className={`text-sm font-medium cursor-text flex-1 ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}
         >
-          <div className="flex items-center gap-3">
-            <input 
-              type="checkbox" 
-              checked={sub.completed}
-              onChange={() => toggleSubtask(sub)}
-              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-            />
-            <span className={`text-sm font-medium ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-              {sub.title}
-            </span>
-          </div>
+          {sub.title}
+        </span>
+      )}
+    </div>
 
-          <div className="flex items-center gap-2">
-            <button onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>  
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
-              {sub.completed ? 'Done' : 'In Progress'}
-            </span>
-          </div>
-        </div>
-      ))
+    <div className="flex items-center gap-2">
+      {editingSubtaskId === sub.id ? (
+        <button 
+          onClick={() => handleUpdateSubtask(sub.id)}
+          className="text-[10px] font-bold text-indigo-600 uppercase hover:text-indigo-800"
+        >
+          Save
+        </button>
+      ) : (
+        <button 
+          onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} 
+          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      )}
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+        {sub.completed ? 'Done' : 'In Progress'}
+      </span>
+    </div>
+  </div>
+))
     ) : (
       <p className="text-sm text-slate-400 italic">No subtasks found for this task.</p>
     )}
+{isAddingSubtask ? (
+    <div className="flex items-center gap-2 mt-2 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
+        <input
+            autoFocus
+            className="flex-1 bg-transparent text-sm outline-none px-2 py-1"
+            placeholder="What needs to be done?"
+            value={newSubtaskTitle}
+            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
+        />
+        <button onClick={handleAddSubtask} className="text-xs font-bold text-indigo-600 px-2 hover:text-indigo-800">Add</button>
+        <button onClick={() => setIsAddingSubtask(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
+    </div>
+) : (
+    <button 
+        onClick={() => setIsAddingSubtask(true)}
+        className="mt-2 w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-bold uppercase tracking-wider hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        Add Subtask
+    </button>
+)}
   </div>
 )}
 </React.Fragment>

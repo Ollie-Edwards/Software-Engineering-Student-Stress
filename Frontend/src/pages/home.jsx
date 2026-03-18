@@ -43,7 +43,7 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
           const toggleSubtask = async (subtask) => {
           const endpoint = subtask.completed ? 'reopen' : 'complete';
           try {
-            const response = await fetch(`http://localhost:8000/subtask/${subtask.id}/${endpoint}`, {
+            const response = await fetch(`http://localhost:8000/tasks/subtask/${subtask.id}/${endpoint}`, {
               method: 'POST',
             });
             if (response.ok) fetchTasks(); 
@@ -51,6 +51,28 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
             console.error("Fetch error:", err);
           }
           };
+
+          const handleDeleteSubtask = async (subtaskId) => {
+    try {
+        const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-User-Id': '1'
+            }
+        });
+
+        if (response.ok) {
+            setTasks(prevTasks => prevTasks.map(task => ({
+                ...task,
+                subtasks: task.subtasks.filter(st => st.id !== subtaskId)
+            })));
+        } else {
+            console.error("Failed to delete subtask");
+        }
+    } catch (error) {
+        console.error("Error deleting subtask:", error);
+    }
+};
 
           return(
           <React.Fragment key={task.id}>
@@ -130,6 +152,11 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
           </div>
 
           <div className="flex items-center gap-2">
+            <button onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>  
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
               {sub.completed ? 'Done' : 'In Progress'}
             </span>

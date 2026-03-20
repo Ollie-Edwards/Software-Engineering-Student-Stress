@@ -26,6 +26,8 @@ const MoodleTasks = () => {
         },
       );
 
+      console.log(tasks);
+
       // Trigger animation
       setRemovedIds((prev) => [...prev, moodleTaskId]);
 

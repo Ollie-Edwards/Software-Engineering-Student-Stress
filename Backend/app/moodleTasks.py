@@ -14,20 +14,10 @@ router = APIRouter()
 @router.get("")  # default /moodletasks endpoint
 def get_tasks(db: Session = Depends(get_db)):
     moodleTasks = (
-        db.query(MoodleTask).filter(MoodleTask.user_id == 2).all()
-    )  # Hard coded user 2, until users are implemented
-
-    if not moodleTasks:
-        raise HTTPException(status_code=404, detail="No Tasks Found")
-
-    else:
-        return moodleTasks
-
-
-@router.get("")  # default /moodletasks endpoint
-def get_tasks(db: Session = Depends(get_db)):
-    moodleTasks = (
-        db.query(MoodleTask).filter(MoodleTask.user_id == 2).all()
+        db.query(MoodleTask).filter(
+            MoodleTask.user_id == 2,
+            MoodleTask.approved == None                   
+        ).all()
     )  # Hard coded user 2, until users are implemented
 
     if not moodleTasks:
@@ -52,7 +42,7 @@ def approve_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Task already approved")
 
     new_task = Task(
-        user_id=moodleTask.user_id,
+        user_id=1,
         title=moodleTask.title,
         description=f"{moodleTask.course_name} | {moodleTask.activity}",
         length=20,

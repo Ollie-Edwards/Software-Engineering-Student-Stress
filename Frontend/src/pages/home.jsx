@@ -309,6 +309,7 @@ export default function Home({isAdding, setIsAdding}) {
         const res = await fetch("http://localhost:8000/tasks");
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
+        console.log(data);
         setTasks(data);
       } catch (err) {
         setError(err.message);

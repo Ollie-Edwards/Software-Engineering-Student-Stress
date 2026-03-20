@@ -79,7 +79,10 @@ CREATE TABLE tasks (
     LENGTH SMALLINT NOT NULL DEFAULT 0 CHECK (LENGTH BETWEEN 5 AND 300),
     tags JSONB DEFAULT '{}',
     due_at TIMESTAMP,
-    reminder_enabled BOOLEAN DEFAULT FALSE,
+    reminder_enabled BOOLEAN DEFAULT false,
+
+    reference_url VARCHAR(255) DEFAULT NULL,
+
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     completed_at TIMESTAMP DEFAULT NULL,
@@ -114,8 +117,10 @@ CREATE TABLE moodletasks (
     course_name VARCHAR(255) NOT NULL,
     activity VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    reference_url VARCHAR(255),
+    reference_url VARCHAR(255) NOT NULL,
     approved BOOLEAN DEFAULT NULL,
+
+    due_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     approved_at TIMESTAMP DEFAULT NULL,
@@ -384,3 +389,4 @@ CREATE TRIGGER update_notification_on_reminder_change
 AFTER UPDATE OF remind_at, enabled ON reminders
 FOR EACH ROW
 EXECUTE FUNCTION update_notification_on_reminder_change();
+CREATE INDEX idx_moodletasks_user_id ON moodletasks(user_id);

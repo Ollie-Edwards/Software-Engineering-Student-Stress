@@ -13,7 +13,6 @@ class Subtask(Base):
     )
 
     title = Column(String(255), nullable=False)
-    status = Column(Boolean, nullable=False)
     order_index = Column(Integer)
     completed = Column(Boolean, nullable=False)
 

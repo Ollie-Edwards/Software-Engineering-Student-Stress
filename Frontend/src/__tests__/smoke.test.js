@@ -1,3 +1,3 @@
-it('vitest is working', () => {
-  expect(1 + 1).toBe(2)
-})
+it("vitest is working", () => {
+  expect(1 + 1).toBe(2);
+});

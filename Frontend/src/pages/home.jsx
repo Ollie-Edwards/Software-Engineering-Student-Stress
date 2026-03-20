@@ -1,35 +1,7 @@
 import React, { useEffect, useState } from "react";
+import LinkButton from '../components/linkElement';
 
-export default function Home({isAdding, setIsAdding}) {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const uncompletedTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
-  const [sortOrder, setSortOrder] = useState("desc");
-
-    useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const res = await fetch("http://localhost:8000/tasks");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setTasks(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTasks();
-  }, []);
-
-  if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
-
-  const Taskcard = (task) => {
+const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}
           const isHigh = task.importance >= 8;
           const isMedium = task.importance >= 4 && task.importance < 8;
@@ -39,9 +11,138 @@ export default function Home({isAdding, setIsAdding}) {
           const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
           const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
 
+          const [showSubtasks, setShowSubtasks] = useState(false);
+          const [editingSubtaskId, setEditingSubtaskId] = useState(null);
+          const [tempSubtaskTitle, setTempSubtaskTitle] = useState("");
+          const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+          const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+
           const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
 
+          const toggleComplete = async (e) => {
+                  e.stopPropagation();
+                  const currentlyCompleted = task.completed; 
+                  const newStatus = !currentlyCompleted;
+
+                  setTasks(prevTasks => prevTasks.map(t => 
+                    t.id === task.id ? { ...t, completed: newStatus, subtasks: t.subtasks.map(st => ({ ...st, completed: newStatus })) } : t
+                  ));
+                  const endpoint = newStatus ? 'complete' : 'reopen';
+                  const url = `http://localhost:8000/tasks/task/${task.id}/${endpoint}`;
+
+                  try {
+                    const response = await fetch(url, { method: 'POST' });
+
+                    if (!response.ok) {
+                      throw new Error("Database update failed");
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    setTasks(prevTasks => prevTasks.map(t => 
+                    t.id === task.id ? { ...t, completed: currentlyCompleted, subtasks: t.subtasks.map(st => ({ ...st, completed: currentlyCompleted }))} : t
+                    ));
+                  }
+            }
+
+          const toggleSubtask = async (subtask) => {
+          const endpoint = subtask.completed ? 'reopen' : 'complete';
+          try {
+            const response = await fetch(`http://localhost:8000/tasks/subtask/${subtask.id}/${endpoint}`, {
+              method: 'POST',
+            });
+            if (response.ok) fetchTasks(); 
+          } catch (err) {
+            console.error("Fetch error:", err);
+          }
+          };
+
+          const handleDeleteSubtask = async (subtaskId) => {
+    try {
+        const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-User-Id': '1'
+            }
+        });
+
+        if (response.ok) {
+            setTasks(prevTasks => prevTasks.map(task => ({
+                ...task,
+                subtasks: task.subtasks.filter(st => st.id !== subtaskId)
+            })));
+        } else {
+            console.error("Failed to delete subtask");
+        }
+    } catch (error) {
+        console.error("Error deleting subtask:", error);
+    }
+};
+
+const handleUpdateSubtask = async (subtaskId) => {
+  try {
+    const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-User-Id': '1' 
+      },
+      body: JSON.stringify({ title: tempSubtaskTitle })
+    });
+
+    if (response.ok) {
+      setTasks(prev => prev.map(t => {
+        if (t.id === task.id) {
+          return {
+            ...t,
+            subtasks: t.subtasks.map(st => 
+              st.id === subtaskId ? { ...st, title: tempSubtaskTitle } : st
+            )
+          };
+        }
+        return t;
+      }));
+      setEditingSubtaskId(null);
+    }
+  } catch (err) {
+    console.error("Failed to update subtask:", err);
+    }
+  };
+
+  const handleAddSubtask = async () => {
+    if (!newSubtaskTitle.trim()) return;
+
+    try {
+        const response = await fetch(`http://localhost:8000/tasks/subtasks`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-User-Id': '1' 
+            },
+            body: JSON.stringify({ 
+                title: newSubtaskTitle,
+                task_id: task.id,
+                completed: false 
+            })
+        });
+
+        if (response.ok) {
+            const createdSubtask = await response.json();
+            // Update local state
+            setTasks(prev => prev.map(t => 
+                t.id === task.id 
+                ? { ...t, subtasks: [...t.subtasks, createdSubtask] } 
+                : t
+            ));
+            setNewSubtaskTitle("");
+            setIsAddingSubtask(false);
+        }
+    } catch (err) {
+        console.error("Failed to add subtask:", err);
+    }
+};
+
           return(
+          <React.Fragment key={task.id}>
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
             <div className={`w-2 shrink-0 ${barColor}`} />
             <div className="p-5 flex-1 flex flex-col gap-3">
@@ -49,27 +150,34 @@ export default function Home({isAdding, setIsAdding}) {
               <div className ="flex justify-between items-start">
                 <div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block ${badgeBg} ${badgeText}`}>
-                    • {priorityLabel} ({task.importance})
+                    • {priorityLabel} ({task.priority})
                   </span>
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
                 <div className="flex items-center gap-1">
-                <button onClick={toggleReminder} className={`p-2 transition-all rounded-lg ${task.reminder ? 'text-indigo-600' : 'text-slate-400'}`}>
-                  {task.reminder ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5 text-slate-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                  <LinkButton url={task.reference_url} />
+                  <button onClick={toggleComplete} className="focus:outline-none transition-transform active:scale-90">
+                  {task.completed ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
                     </svg>
                   )}
                 </button>
-                <button onClick={(e) => e.stopPropagation()} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
+                <button onClick={(e) => {e.stopPropagation(); handleDeleteTask(task.id);}} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>  
+                <button onClick={(e) => {e.stopPropagation(); setShowSubtasks(!showSubtasks);}} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showSubtasks ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
                 </div>
               </div>
 
@@ -87,8 +195,218 @@ export default function Home({isAdding, setIsAdding}) {
               </div>
           </div>
           </div>
-          )
-  }
+
+          {showSubtasks && (
+  <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 rounded-b-xl p-4 space-y-3">
+    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Subtasks</h4>
+    
+    {task.subtasks && task.subtasks.length > 0 ? (
+      task.subtasks.map((sub) => (
+  <div  
+    key={sub.id} 
+    className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-all"
+  >
+    <div className="flex items-center gap-3 flex-1">
+      <input 
+        type="checkbox" 
+        checked={sub.completed}
+        onChange={() => toggleSubtask(sub)}
+        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+      />
+      
+      {editingSubtaskId === sub.id ? (
+        <input 
+          autoFocus
+          className="text-sm font-medium text-slate-700 border-b border-indigo-500 outline-none flex-1"
+          value={tempSubtaskTitle}
+          onChange={(e) => setTempSubtaskTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleUpdateSubtask(sub.id);
+            if (e.key === 'Escape') setEditingSubtaskId(null);
+          }}
+        />
+      ) : (
+        <span 
+          onClick={() => {
+            setEditingSubtaskId(sub.id);
+            setTempSubtaskTitle(sub.title);
+          }}
+          className={`text-sm font-medium cursor-text flex-1 ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}
+        >
+          {sub.title}
+        </span>
+      )}
+    </div>
+
+    <div className="flex items-center gap-2">
+      {editingSubtaskId === sub.id ? (
+        <button 
+          onClick={() => handleUpdateSubtask(sub.id)}
+          className="text-[10px] font-bold text-indigo-600 uppercase hover:text-indigo-800"
+        >
+          Save
+        </button>
+      ) : (
+        <button 
+          onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} 
+          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      )}
+      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+        {sub.completed ? 'Done' : 'In Progress'}
+      </span>
+    </div>
+  </div>
+))
+    ) : (
+      <p className="text-sm text-slate-400 italic">No subtasks found for this task.</p>
+    )}
+{isAddingSubtask ? (
+    <div className="flex items-center gap-2 mt-2 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
+        <input
+            autoFocus
+            className="flex-1 bg-transparent text-sm outline-none px-2 py-1"
+            placeholder="What needs to be done?"
+            value={newSubtaskTitle}
+            onChange={(e) => setNewSubtaskTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
+        />
+        <button onClick={handleAddSubtask} className="text-xs font-bold text-indigo-600 px-2 hover:text-indigo-800">Add</button>
+        <button onClick={() => setIsAddingSubtask(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
+    </div>
+) : (
+    <button 
+        onClick={() => setIsAddingSubtask(true)}
+        className="mt-2 w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-bold uppercase tracking-wider hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        Add Subtask
+    </button>
+)}
+  </div>
+)}
+</React.Fragment>
+          );
+  };
+
+export default function Home({isAdding, setIsAdding}) {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const uncompletedTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+  const [sortOrder, setSortOrder] = useState("desc");
+
+    async function fetchTasks() {
+      try {
+        const res = await fetch("http://localhost:8000/tasks");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        setTasks(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+
+
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const updatedData = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      importance: parseInt(formData.get('importance')) || 0,
+      length: parseInt(formData.get('length')) || null,
+      reminder_enabled: formData.get('reminder') === 'on' 
+    };
+
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${editingTask.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        const savedTask = await response.json();
+        setTasks(prev => prev.map(t => t.id === savedTask.id ? savedTask : t));
+        setEditingTask(null);
+      }
+    } catch (error) {
+      console.error("Update failed:", error);
+    }
+  };
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const newTaskData = {
+      user_id: 1,
+      title: formData.get('title'),
+      description: formData.get('description'),
+      importance: parseInt(formData.get('importance')) || 0,
+      length: parseInt(formData.get('length')) || null,
+      due_at: formData.get('due_at') ? new Date(formData.get('due_at')).toISOString() : null,
+      reminder_enabled: formData.get('reminder') === 'on',
+      completed: false
+    };
+
+    try {
+      const response = await fetch('http://localhost:8000/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTaskData),
+      });
+
+      if (response.ok) {
+        const createdTask = await response.json();
+        setTasks(prev => [...prev, createdTask]);
+        setIsAdding(false);
+      }
+      } catch (error) {
+      console.error("Task creation failed:", error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+  
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+      
+        if (editingTask?.id === taskId) {
+          setEditingTask(null);
+        }
+      } else {
+        console.error("Failed to delete task");
+      }
+    } catch (error) {
+      console.error("Error during deletion:", error);
+    }
+  };
 
   return (
     <div className="p-6 space-y-4">
@@ -117,7 +435,14 @@ export default function Home({isAdding, setIsAdding}) {
               ? b.importance - a.importance
               : a.importance - b.importance;
           })
-          .map(task => Taskcard(task))}
+          .map(task => <Taskcard 
+            key={task.id}
+            task={task} 
+            setTasks={setTasks}
+            setEditingTask={setEditingTask}
+            handleDeleteTask={handleDeleteTask}
+            fetchTasks={fetchTasks}
+          />)}
       </div>  
 
       {completedTasks.length > 0 && (
@@ -133,7 +458,14 @@ export default function Home({isAdding, setIsAdding}) {
                   ? b.importance - a.importance
                   : a.importance - b.importance;
               })
-              .map(task => Taskcard(task))}
+              .map(task => <Taskcard 
+      key={task.id}
+      task={task} 
+      setTasks={setTasks}
+      setEditingTask={setEditingTask}
+      handleDeleteTask={handleDeleteTask}
+      fetchTasks={fetchTasks} 
+    />)}
           </div>
         </div>
       )}
@@ -146,10 +478,10 @@ export default function Home({isAdding, setIsAdding}) {
                 <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
       
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input required
+                <input name="title" required
                   className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                   defaultValue={editingTask.title} 
                 />
@@ -157,7 +489,7 @@ export default function Home({isAdding, setIsAdding}) {
         
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-              <textarea 
+              <textarea name="description"
                 className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
                 defaultValue={editingTask.description} 
               />
@@ -166,7 +498,7 @@ export default function Home({isAdding, setIsAdding}) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                <input name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
+                <input required name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length (e.g. 30m)</label>
@@ -180,8 +512,8 @@ export default function Home({isAdding, setIsAdding}) {
             </div>
 
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <input name="completed" type="checkbox" defaultChecked={editingTask.completed} className="w-5 h-5 accent-indigo-600" />
-              <span className="text-sm font-semibold text-slate-700">Mark as Completed</span>
+              <input name="reminder_enabled" type="checkbox" defaultChecked={editingTask.reminder} className="w-5 h-5 accent-indigo-600" />
+              <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -212,7 +544,7 @@ export default function Home({isAdding, setIsAdding}) {
               <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
       
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
                 <input name="title" required placeholder="Title" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -239,6 +571,11 @@ export default function Home({isAdding, setIsAdding}) {
                   <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length</label>
                   <input name="length" type="number" min="0" placeholder="30" className="w-full border rounded-xl px-4 py-2 outline-none" />
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                <input name="reminder_enabled" type="checkbox" className="w-5 h-5 accent-indigo-600" />
+                  <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
               </div>
 
               <div className="flex gap-3 pt-4">

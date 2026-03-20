@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     JSON,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -37,4 +38,5 @@ class Task(Base):
     completed_at = Column(TIMESTAMP, nullable=True)
 
     user = relationship("User", backref="tasks")
+    reminders = relationship("Reminders", back_populates="task")
     subtasks = relationship("Subtask", back_populates="task", cascade="all, delete-orphan", lazy="joined")

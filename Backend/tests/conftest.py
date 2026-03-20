@@ -16,6 +16,11 @@ sys.path.insert(0, str(ROOT_DIR))
 
 from app.database import Base, get_db
 from app.main import app
+from app.models.user import User
+from app.models.task import Task
+from app.models.subtask import Subtask
+from app.models.reminders import Reminders
+from app.models.notification import Notification
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -71,6 +76,8 @@ import pytest
 from app.models.task import Task
 from app.models.subtask import Subtask
 from app.models.moodleTask import MoodleTask
+from app.models.reminders import Reminders
+from app.models.notification import Notification
 
 
 @pytest.fixture

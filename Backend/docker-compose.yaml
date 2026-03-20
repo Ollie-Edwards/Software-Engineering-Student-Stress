@@ -8,6 +8,8 @@ services:
       - db
     environment:
       DATABASE_URL: "postgresql://myuser:mypass@db:5432/mydb"
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
       interval: 5s
@@ -27,6 +29,8 @@ services:
       - db
     environment:
       DATABASE_URL: "postgresql://myuser:mypass@db:5432/mydb"
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
       interval: 5s
@@ -46,6 +50,8 @@ services:
       - db
     environment:
       DATABASE_URL: "postgresql://myuser:mypass@db:5432/mydb"
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
       interval: 5s

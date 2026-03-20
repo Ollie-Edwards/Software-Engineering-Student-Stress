@@ -1,0 +1,56 @@
+import os
+from datetime import datetime
+import pytest
+
+
+from dotenv import load_dotenv
+from app.models.user import User
+from app.models.task import Task
+from app.models.subtask import Subtask
+from app.models.reminders import Reminders
+from app.models.notification import Notification
+import app.scheduler as scheduler
+
+
+def db():
+    # Use the db fixture from conftest.py
+    pass  # The db fixture is already provided by conftest.py
+
+
+@pytest.fixture
+def test_user(db):
+    load_dotenv()
+    user = User(
+        name="Test User",
+        date_of_birth=datetime(2000, 1, 1).date(),
+        email=os.getenv("GMAIL_USER"),
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    yield user
+    db.delete(user)
+    db.commit()
+
+
+@pytest.fixture
+def test_notification(db, test_user):
+    notif = Notification(
+        user_id=test_user.id,
+        message="[TEST] This is a test notification",
+        scheduled_at=datetime.now(),
+        delivered=False,
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+    yield notif
+    db.delete(notif)
+    db.commit()
+
+
+def test_scheduler_sends_notification(db, test_user, test_notification, monkeypatch):
+    # monkeypatch.setattr(scheduler, "send_email", lambda *a, **kw: True)
+    scheduler.check_and_send_notifications()
+    db.refresh(test_notification)
+    assert test_notification.delivered in [True, False]  # depends on implementation

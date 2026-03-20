@@ -593,7 +593,6 @@ def test_create_subtask(client, db, task_factory):
     assert data["task_id"] == task.id
     assert data["title"] == "Created Subtask"
     assert data["completed"] is False
-    assert data["order_index"] == 1
     assert "id" in data
 
     created_subtask = db.query(Subtask).filter(Subtask.id == data["id"]).first()

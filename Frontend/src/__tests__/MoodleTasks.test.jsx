@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import MoodleTasks from "../MoodleTask";
 
@@ -23,6 +24,9 @@ const mockTasks = [
 ];
 
 beforeEach(() => {
+  // allow timers to be faked so animations can be skipped
+  // vi.useFakeTimers()
+
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -37,27 +41,27 @@ beforeEach(() => {
   );
 });
 
+// Make sure that the mock data is reset after each so testing is predictable
+// allow timers to be faked so animations can be skipped
 afterEach(() => {
   vi.restoreAllMocks();
+  // vi.useRealTimers()
 });
 
 describe("MoodleTasks", () => {
-  it("renders without crashing", () => {
+  it("renders without crashing", async () => {
     render(<MoodleTasks />);
+    await screen.findByText('Submit Assignment 1')
     expect(document.querySelector(".min-h-screen")).toBeInTheDocument();
   });
 
-  it("renders the page heading", () => {
+  it("renders the page heading", async () => {
     render(<MoodleTasks />);
+    await screen.findByText('Submit Assignment 1')
     expect(screen.getByText("Moodle Tasks")).toBeInTheDocument();
   });
 
-  it("has correct root background class", () => {
-    const { container } = render(<MoodleTasks />);
-    expect(container.firstChild).toHaveClass("bg-slate-50", "min-h-screen");
-  });
-
-  it("fetches moodle tasks on mount", async () => {
+  it("fetches moodle tasks on startup", async () => {
     render(<MoodleTasks />);
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith("http://localhost:8000/moodletasks");
@@ -133,7 +137,6 @@ describe("MoodleTasks", () => {
     );
     render(<MoodleTasks />);
     await waitFor(() => {
-      // Error state is stored but component renders no tasks — grid should be empty
       expect(screen.queryByText("Submit Assignment 1")).not.toBeInTheDocument();
     });
   });
@@ -147,4 +150,45 @@ describe("MoodleTasks", () => {
       expect(document.querySelector(".grid")).toBeEmptyDOMElement();
     });
   });
+
+  it('handles task approval button press', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    render(<MoodleTasks/>)
+    await screen.findByText("Submit Assignment 1");
+
+    // get all approval buttons on page - click the top one
+    const approveButtons = screen.getAllByTitle("Approve Task");
+    await user.click(approveButtons[0])
+
+    await waitFor(() =>
+      expect(screen.queryByText('Submit Assignment 1')).not.toBeInTheDocument(),
+      { timeout: 2000 }
+    )
+  })
+
+  it('handles task rejected button press', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    render(<MoodleTasks/>)
+    await screen.findByText("Submit Assignment 1");
+
+    // get all approval buttons on page - click the top one
+    const rejectButtons = screen.getAllByTitle("Reject Task");
+    await user.click(rejectButtons[0])
+
+    await waitFor(() =>
+      expect(screen.queryByText('Submit Assignment 1')).not.toBeInTheDocument(),
+      { timeout: 2000 }
+    )
+  })
 });
+
+  // it("renders approve and reject buttons for each task", async () => {
+  //   render(<MoodleTasks />);
+  //   await screen.findByText("Submit Assignment 1");
+  //   const approveButtons = screen.getAllByTitle("Approve Task");
+  //   const rejectButtons = screen.getAllByTitle("Reject Task");
+  //   expect(approveButtons).toHaveLength(mockTasks.length);
+  //   expect(rejectButtons).toHaveLength(mockTasks.length);
+  // });

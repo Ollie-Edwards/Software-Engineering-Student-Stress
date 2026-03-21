@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import LinkButton from "./components/linkElement";
+import LinkButton from "./components/LinkElement";
 
 const MoodleTasks = () => {
   const [tasks, setTasks] = useState([]);

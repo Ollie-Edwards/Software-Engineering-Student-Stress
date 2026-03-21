@@ -11,16 +11,14 @@ describe("NavigationBar", () => {
     const user = userEvent.setup()
     
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/moodle"]}>
         <NavigationBar />
       </MemoryRouter>
     )
 
-    await screen.findByText("Submit Assignment 1");
-
     // get all approval buttons on page - click the top one
-    const backButton = screen.getByText(/Back to Main/i)
-    await user.click(backButton[0])
+    const backButton = await screen.getByText(/Back to Main/i)
+    await user.click(backButton)
 
     expect(window.location.pathname).toBe('/')
   })

@@ -9,12 +9,7 @@ function NavigationBar({ onAddTask }) {
 
   return (
     <nav className="flex items-center justify-between p-4 bg-white border-b">
-      <div className="text-indigo-600 font-bold text-xl">Logo</div>
-      <input
-        type="text"
-        placeholder="Search tasks..."
-        className="border rounded-lg px-4 py-2 w-1/3 bg-slate-50"
-      />
+      <div className="text-indigo-600 font-bold text-xl">PriorityBoost</div>
 
       <div className="flex items-center gap-4">
         {isMoodlePage ? (

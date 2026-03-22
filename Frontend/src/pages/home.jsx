@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import LinkButton from '../components/linkElement';
+import LinkButton from '../components/LinkElement';
 
 const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}

@@ -17,8 +17,6 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
           const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
           const [isAddingSubtask, setIsAddingSubtask] = useState(false);
 
-          const toggleReminder = (e) => {e.stopPropagation(); setTasks(prevTasks => prevTasks.map(t => t.id === task.id ? { ...t, reminder: !t.reminder } : t));};
-
           const toggleComplete = async (e) => {
                   e.stopPropagation();
                   const currentlyCompleted = task.completed; 
@@ -173,7 +171,7 @@ const handleUpdateSubtask = async (subtaskId) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>  
-                <button onClick={(e) => {e.stopPropagation(); setShowSubtasks(!showSubtasks);}} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                <button title="Toggle Subtasks" onClick={(e) => {e.stopPropagation(); setShowSubtasks(!showSubtasks);}} className="p-1 hover:bg-slate-100 rounded transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showSubtasks ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -241,6 +239,7 @@ const handleUpdateSubtask = async (subtaskId) => {
     <div className="flex items-center gap-2">
       {editingSubtaskId === sub.id ? (
         <button 
+        title="Save Subtask"
           onClick={() => handleUpdateSubtask(sub.id)}
           className="text-[10px] font-bold text-indigo-600 uppercase hover:text-indigo-800"
         >
@@ -248,6 +247,7 @@ const handleUpdateSubtask = async (subtaskId) => {
         </button>
       ) : (
         <button 
+          title="Delete Subtask"
           onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} 
           className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg"
         >
@@ -276,7 +276,6 @@ const handleUpdateSubtask = async (subtaskId) => {
             onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
         />
         <button onClick={handleAddSubtask} className="text-xs font-bold text-indigo-600 px-2 hover:text-indigo-800">Add</button>
-        <button onClick={() => setIsAddingSubtask(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">Cancel</button>
     </div>
 ) : (
     <button 

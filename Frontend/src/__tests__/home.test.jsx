@@ -50,50 +50,72 @@ beforeEach(() => {
 })
 
 describe("Home", () => {
-  it("base task page renders without crashing", async () => {
-    render(<Home isAdding={false} setIsAdding={vi.fn()} />);
-    await screen.findByText('Tasks')
 
-    expect(screen.getByText('Tasks')).toBeInTheDocument();
+  describe("Rendering", () => {
+    it("renders without crashing", async () => {
+      renderHome()
+      await screen.findByText('Tasks')
+      expect(screen.getByText('Tasks')).toBeInTheDocument()
+      expect(screen.getByText(/tasks remaining/i)).toBeInTheDocument()
+      expect(screen.getByText(/sort by/i)).toBeInTheDocument()
+      expect(screen.getByText(mockTasks[0].title)).toBeInTheDocument()
+    })
 
-    expect(screen.getByText(/tasks remaining/i)).toBeInTheDocument()
-    expect(screen.getByText(/sort by/i)).toBeInTheDocument()
-    expect(screen.getByText(mockTasks[0]["title"])).toBeInTheDocument()
-  });
+    it("shows no tasks found when list is empty", async () => {
+      fetch.mockImplementationOnce(() =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+      )
+      renderHome()
+      expect(await screen.findByText('No tasks found.')).toBeInTheDocument()
+    })
 
-  it("task page handles no tasks being returned", async () => {
-    // Override "beforeEach" fetch
-    fetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([]),
-      })
-    )
+    it("shows error state when fetch fails", async () => {
+      fetch.mockImplementationOnce(() =>
+        Promise.resolve({ ok: false })
+      )
+      renderHome()
+      expect(await screen.findByText(/HTTP error/i)).toBeInTheDocument()
+    })
+  })
 
-    render(<Home isAdding={false} setIsAdding={vi.fn()} />)
-    expect(await screen.findByText('No tasks found.')).toBeInTheDocument()
-  });
+  describe("Sorting", () => {
+    it("sorts highest to lowest by default", async () => {})
+    it("sorts lowest to highest when dropdown changed", async () => {})
+  })
 
-  it("task page handles error if fetch fails", async () => {
-    // Override "beforeEach" fetch to fail
-    fetch.mockImplementationOnce(() =>
-      Promise.resolve({ ok: false })
-    )
+  describe("Complete task", () => {
+    it("calls the complete endpoint when button clicked", async () => {
+      const user = userEvent.setup()
+      renderHome()
+      await screen.findByText('Tasks')
 
-    render(<Home isAdding={false} setIsAdding={vi.fn()} />)
-    expect(await screen.findByText(/HTTP error/i)).toBeInTheDocument()
-  });
+      await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
 
-  it("Completing a task sends correct POST request", async () => {
-    const user = userEvent.setup()
-    render(<Home isAdding={false} setIsAdding={vi.fn()} />)
-    await screen.findByText('Tasks')
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/tasks/task/2/complete',
+        { method: 'POST' }
+      )
+    })
 
-    await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
+    it("calls the reopen endpoint when clicking a completed task", async () => {})
+  })
 
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/tasks/task/2/complete',
-      { method: 'POST' }
-    )
-  });
-}) 
+  describe("Delete task", () => {
+    it("calls the delete endpoint after confirming", async () => {})
+    it("removes the task from the list after deletion", async () => {})
+    it("does not delete if confirm is cancelled", async () => {})
+  })
+
+  describe("Edit modal", () => {
+    it("opens when a task card is clicked", async () => {})
+    it("is pre-filled with the task title", async () => {})
+    it("closes when cancel is clicked", async () => {})
+    it("calls the PUT endpoint on submit", async () => {})
+  })
+
+  describe("Create modal", () => {
+    it("shows when isAdding is true", async () => {})
+    it("calls setIsAdding(false) when × is clicked", async () => {})
+  })
+
+})

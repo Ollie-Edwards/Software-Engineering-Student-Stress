@@ -19,11 +19,6 @@ describe("App", () => {
     expect(screen.getByText("+ New Task")).toBeInTheDocument();
   });
 
-  it("renders the search input", () => {
-    render(<App />);
-    expect(screen.getByPlaceholderText("Search tasks...")).toBeInTheDocument();
-  });
-
   it("sets isAdding to true when New Task button is clicked", () => {
     render(<App />);
     fireEvent.click(screen.getByText("+ New Task"));

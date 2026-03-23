@@ -156,7 +156,7 @@ const handleUpdateSubtask = async (subtaskId) => {
                 </div>
                 <div className="flex items-center gap-1">
                   <LinkButton url={task.reference_url} />
-                  <button onClick={toggleComplete} className="focus:outline-none transition-transform active:scale-90">
+                  <button onClick={toggleComplete} title="Toggle Complete Task" className="focus:outline-none transition-transform active:scale-90">
                   {task.completed ? (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
                       <rect x="3" y="3" width="18" height="18" rx="3" />

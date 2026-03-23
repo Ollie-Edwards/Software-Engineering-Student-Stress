@@ -9,11 +9,25 @@ import Home from "../pages/Home";
 const mockTasks = [
   {
     id: 1,
-    title: "Finish homework",
-    description: "Math and English",
-    importance: 8,
+    title: "Finish ML coursework",
+    description: "Jupyter Notebook",
+    importance: 4,
     length: 60,
-    due_at: null,
+    due_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    completed: false,
+    reminder: false,
+    reference_url: null,
+    subtasks: [],
+  },
+    {
+    id: 2,
+    title: "Software Engineering presentation",
+    description: "Book room",
+    importance: 10,
+    length: 30,
+    due_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     completed: false,
@@ -24,12 +38,15 @@ const mockTasks = [
 ]
 
 beforeEach(() => {
-  vi.stubGlobal('fetch', vi.fn(() =>
-    Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve(mockTasks),
-    })
-  ))
+  vi.stubGlobal('fetch', vi.fn((url) => {
+    if (url === 'http://localhost:8000/tasks') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockTasks),
+      })
+    }
+    return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
+  }))
 })
 
 describe("Home", () => {
@@ -41,7 +58,7 @@ describe("Home", () => {
 
     expect(screen.getByText(/tasks remaining/i)).toBeInTheDocument()
     expect(screen.getByText(/sort by/i)).toBeInTheDocument()
-    expect(screen.getByText('Finish homework')).toBeInTheDocument()
+    expect(screen.getByText(mockTasks[0]["title"])).toBeInTheDocument()
   });
 
   it("task page handles no tasks being returned", async () => {
@@ -64,6 +81,19 @@ describe("Home", () => {
     )
 
     render(<Home isAdding={false} setIsAdding={vi.fn()} />)
-    expect(await screen.findByText('HTTP error')).toBeInTheDocument()
+    expect(await screen.findByText(/HTTP error/i)).toBeInTheDocument()
+  });
+
+  it("Completing a task sends correct POST request", async () => {
+    const user = userEvent.setup()
+    render(<Home isAdding={false} setIsAdding={vi.fn()} />)
+    await screen.findByText('Tasks')
+
+    await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:8000/tasks/task/2/complete',
+      { method: 'POST' }
+    )
   });
 }) 

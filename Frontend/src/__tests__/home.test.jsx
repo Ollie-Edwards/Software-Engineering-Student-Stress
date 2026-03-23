@@ -1,9 +1,6 @@
 import React from "react";
-
-import { MemoryRouter } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect } from "vitest";
 import Home from "../pages/Home";
 
 const mockTasks = [
@@ -21,7 +18,7 @@ const mockTasks = [
     reference_url: null,
     subtasks: [],
   },
-    {
+  {
     id: 2,
     title: "Software Engineering presentation",
     description: "Book room",
@@ -34,27 +31,34 @@ const mockTasks = [
     reminder: false,
     reference_url: null,
     subtasks: [],
-  }
+  },
 ]
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn((url) => {
     if (url === 'http://localhost:8000/tasks') {
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(mockTasks),
-      })
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(mockTasks) })
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
   }))
+
+  vi.stubGlobal('confirm', vi.fn(() => true))
 })
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+const renderHome = async () => {
+  render(<Home isAdding={false} setIsAdding={vi.fn()} />)
+  await screen.findByText('Tasks')
+}
 
 describe("Home", () => {
 
   describe("Rendering", () => {
     it("renders without crashing", async () => {
-      renderHome()
-      await screen.findByText('Tasks')
+      await renderHome()
       expect(screen.getByText('Tasks')).toBeInTheDocument()
       expect(screen.getByText(/tasks remaining/i)).toBeInTheDocument()
       expect(screen.getByText(/sort by/i)).toBeInTheDocument()
@@ -65,7 +69,7 @@ describe("Home", () => {
       fetch.mockImplementationOnce(() =>
         Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
       )
-      renderHome()
+      render(<Home isAdding={false} setIsAdding={vi.fn()} />)
       expect(await screen.findByText('No tasks found.')).toBeInTheDocument()
     })
 
@@ -73,21 +77,36 @@ describe("Home", () => {
       fetch.mockImplementationOnce(() =>
         Promise.resolve({ ok: false })
       )
-      renderHome()
+      render(<Home isAdding={false} setIsAdding={vi.fn()} />)
       expect(await screen.findByText(/HTTP error/i)).toBeInTheDocument()
     })
   })
 
   describe("Sorting", () => {
-    it("sorts highest to lowest by default", async () => {})
-    it("sorts lowest to highest when dropdown changed", async () => {})
+    it("sorts highest to lowest by default", async () => {
+      await renderHome()
+
+      const titles = screen.getAllByRole('heading', { level: 2 })
+      expect(titles[0]).toHaveTextContent('Software Engineering presentation')
+      expect(titles[1]).toHaveTextContent('Finish ML coursework')
+    })
+
+    it("sorts lowest to highest when dropdown changed", async () => {
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.selectOptions(screen.getByRole('combobox'), 'asc')
+
+      const titles = screen.getAllByRole('heading', { level: 2 })
+      expect(titles[0]).toHaveTextContent('Finish ML coursework')
+      expect(titles[1]).toHaveTextContent('Software Engineering presentation')
+    })
   })
 
   describe("Complete task", () => {
     it("calls the complete endpoint when button clicked", async () => {
       const user = userEvent.setup()
-      renderHome()
-      await screen.findByText('Tasks')
+      await renderHome()
 
       await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
 
@@ -97,25 +116,94 @@ describe("Home", () => {
       )
     })
 
-    it("calls the reopen endpoint when clicking a completed task", async () => {})
+    it("calls the reopen endpoint when clicking a completed task", async () => {
+      const completedTasks = [{ ...mockTasks[0], completed: true }]
+      
+      fetch.mockImplementationOnce(() =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve(completedTasks) })
+      )
+
+      const user = userEvent.setup()
+      render(<Home isAdding={false} setIsAdding={vi.fn()} />)
+      await screen.findByText('Finish ML coursework')
+
+      await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/tasks/task/1/reopen',
+        { method: 'POST' }
+      )
+    })
   })
 
   describe("Delete task", () => {
-    it("calls the delete endpoint after confirming", async () => {})
+    it("calls the delete endpoint after confirming", async () => {
+      vi.stubGlobal('confirm', vi.fn(() => true))
+
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getAllByTitle('Delete Task')[0])
+
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:8000/tasks/2',
+        { method: 'DELETE' }
+      )
+    })
+
     it("removes the task from the list after deletion", async () => {})
     it("does not delete if confirm is cancelled", async () => {})
   })
 
   describe("Edit modal", () => {
-    it("opens when a task card is clicked", async () => {})
-    it("is pre-filled with the task title", async () => {})
-    it("closes when cancel is clicked", async () => {})
+    it("opens when a task card is clicked", async () => {
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByText('Software Engineering presentation'))
+
+      expect(await screen.findByText('Edit Task')).toBeInTheDocument()
+    })
+
+    it("is pre-filled with the task title", async () => {
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByText('Software Engineering presentation'))
+
+      expect(await screen.findByDisplayValue('Software Engineering presentation')).toBeInTheDocument()
+    })
+
+    it("closes when cancel is clicked", async () => {
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByText('Software Engineering presentation'))
+      await screen.findByText('Edit Task')
+      await user.click(screen.getByText('Cancel'))
+
+      expect(screen.queryByText('Edit Task')).not.toBeInTheDocument()
+    })
+
     it("calls the PUT endpoint on submit", async () => {})
   })
 
   describe("Create modal", () => {
-    it("shows when isAdding is true", async () => {})
-    it("calls setIsAdding(false) when × is clicked", async () => {})
+    it("shows when isAdding is true", async () => {
+      render(<Home isAdding={true} setIsAdding={vi.fn()} />)
+      await screen.findByText('Create New Task')
+      expect(screen.getByText('Create New Task')).toBeInTheDocument()
+    })
+
+    it("calls setIsAdding(false) when × is clicked", async () => {
+      const setIsAdding = vi.fn()
+      render(<Home isAdding={true} setIsAdding={setIsAdding} />)
+      await screen.findByText('Create New Task')
+
+      await userEvent.click(screen.getByTitle('Close Modal'))
+
+      expect(setIsAdding).toHaveBeenCalledWith(false)
+    })
   })
 
 })

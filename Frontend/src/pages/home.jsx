@@ -145,7 +145,7 @@ const handleUpdateSubtask = async (subtaskId) => {
           <React.Fragment key={task.id}>
           <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
             <div className={`w-2 shrink-0 ${barColor}`} />
-            <div className="p-5 flex-1 flex flex-col gap-3">
+            <div title="Task Modal" className="p-5 flex-1 flex flex-col gap-3">
               {/* Title */}
               <div className ="flex justify-between items-start">
                 <div>
@@ -542,7 +542,7 @@ export default function Home({isAdding, setIsAdding}) {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="p-6 border-b flex justify-between items-center bg-indigo-50">
               <h2 className="text-xl font-bold text-slate-800">Create New Task</h2>
-              <button onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+              <button title="Close Modal" onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
             </div>
       
             <form onSubmit={handleCreateTask} className="p-6 space-y-4">

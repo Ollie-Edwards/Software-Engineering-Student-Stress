@@ -107,8 +107,6 @@ const handleUpdateSubtask = async (subtaskId) => {
   };
 
   const handleAddSubtask = async () => {
-    if (!newSubtaskTitle.trim()) return;
-
     try {
         const response = await fetch(`http://localhost:8000/tasks/subtasks`, {
             method: 'POST',

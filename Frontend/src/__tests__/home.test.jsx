@@ -194,6 +194,22 @@ describe("Home", () => {
 
       expect(screen.getByText('Tasks')).toBeInTheDocument()
     })
+
+    it("reverts task completion if fetch returns ok: false", async () => {
+      fetch.mockImplementation((url) => {
+        if (url === 'http://localhost:8000/tasks') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockTasks) })
+        }
+        return Promise.resolve({ ok: false })
+      })
+
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getAllByTitle('Toggle Complete Task')[0])
+
+      expect(screen.getAllByText('Not Completed').length).toBeGreaterThan(0)
+    })
   })
 
   describe("Delete task", () => {
@@ -449,6 +465,68 @@ describe("Home", () => {
       expect(screen.getByText('Tasks')).toBeInTheDocument()
     })
 
+    it("handles subtask toggle network error gracefully", async () => {
+      fetch.mockImplementation((url) => {
+        if (url === 'http://localhost:8000/tasks') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(taskWithSubtasks) })
+        }
+        return Promise.reject(new Error('Network error'))
+      })
+
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByTitle('Toggle Subtasks'))
+      await screen.findByText('Write tests')
+
+      await user.click(screen.getByRole('checkbox'))
+
+      expect(screen.getByText('Tasks')).toBeInTheDocument()
+    })
+
+    it("handles add subtask network error gracefully", async () => {
+      fetch.mockImplementation((url) => {
+        if (url === 'http://localhost:8000/tasks') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(taskWithSubtasks) })
+        }
+        return Promise.reject(new Error('Network error'))
+      })
+
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByTitle('Toggle Subtasks'))
+      await screen.findByText('Add Subtask')
+
+      await user.click(screen.getByText('Add Subtask'))
+      await user.type(screen.getByPlaceholderText('What needs to be done?'), 'New subtask')
+      await user.click(screen.getByText('Add'))
+
+      expect(screen.getByText('Tasks')).toBeInTheDocument()
+    })
+
+    it("handles update subtask network error gracefully", async () => {
+      fetch.mockImplementation((url) => {
+        if (url === 'http://localhost:8000/tasks') {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(taskWithSubtasks) })
+        }
+        return Promise.reject(new Error('Network error'))
+      })
+
+      const user = userEvent.setup()
+      await renderHome()
+
+      await user.click(screen.getByTitle('Toggle Subtasks'))
+      await screen.findByText('Write tests')
+
+      await user.click(screen.getByText('Write tests'))
+      const input = screen.getByDisplayValue('Write tests')
+      await user.clear(input)
+      await user.type(input, 'Updated subtask')
+      await user.keyboard('{Enter}')
+
+      expect(screen.getByText('Tasks')).toBeInTheDocument()
+    })
   })
 
   describe("Error handlers", () => {

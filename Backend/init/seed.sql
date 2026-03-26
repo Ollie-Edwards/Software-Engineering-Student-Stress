@@ -15,11 +15,11 @@ VALUES
 -- Tasks
 -- ===========================================
 -- Alice's tasks (user_id = 1)
-INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at)
+INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at, reference_url)
 VALUES
-(1, 'Plan weekly schedule', 'Create a schedule for next week.', FALSE, 5, 60, ARRAY['planning','weekly'], NOW() + INTERVAL '2 hours'),
-(1, 'Buy groceries', 'Milk, eggs, vegetables.', TRUE, 2, 30, ARRAY['shopping','errands'], NOW() + INTERVAL '8 hours'),
-(1, 'Exercise', '30 minute morning routine.', FALSE, 4, 30, ARRAY['health','fitness'], NOW() + INTERVAL '8 hours');
+(1, 'Software Engineering - Schedule Presentation Practice', 'Meetup and do 2 full runthroughs with the slides.', FALSE, 10, 80, ARRAY['Coursework','weekly'], NOW() + INTERVAL '2 days', 'https://moodle.bath.ac.uk/course/section.php?id=243937'),
+(1, 'Cybersecurity - Payment Card Exercise: Part B', 'Start work on part 2 of cyber coursework..', FALSE, 5, 90, ARRAY['Coursework','errands'], NOW() + INTERVAL '7 days', 'https://moodle.bath.ac.uk/mod/assign/view.php?id=1412485'),
+(1, 'Machine Learning - Shared-Mobility Demand Prediction Coursework', 'Submit Coursework 2 (Semester 2: 2026)', FALSE, 4, 60, ARRAY['Coursework','fitness'], NOW() + INTERVAL '6 hours', 'https://moodle.bath.ac.uk/course/section.php?id=243953');
 
 -- Bob's tasks (user_id = 2)
 INSERT INTO tasks (user_id, title, description, completed, importance, length, tags, due_at)

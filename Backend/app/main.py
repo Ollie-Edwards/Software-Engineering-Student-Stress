@@ -18,12 +18,12 @@ from app.models.task import Task
 from app.models.subtask import Subtask
 from app.schemas import TaskResponse
 from app.models.moodleTask import MoodleTask
-from app.models.reminders import Reminders
-from app.models.notification import Notification
-from app.scheduler import start_scheduler, stop_scheduler
+# from app.models.reminders import Reminders
+# from app.models.notification import Notification
+# from app.scheduler import start_scheduler, stop_scheduler
 
 from app.tasks import router as tasks_router
-from app.reminders import router as reminders_router
+# from app.reminders import router as reminders_router
 from app.moodleTasks import router as moodletasks_router
 
 engine = create_engine(DATABASE_URL)
@@ -38,15 +38,15 @@ while True:
 
 Base.metadata.create_all(bind=engine)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    start_scheduler()
-    yield
-    # Shutdown
-    stop_scheduler()
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # Startup
+#     start_scheduler()
+#     yield
+#     # Shutdown
+#     stop_scheduler()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 @app.get("/")
 async def root():
@@ -54,7 +54,7 @@ async def root():
 
 
 app.include_router(tasks_router, prefix="/tasks", tags=["tasks"])
-app.include_router(reminders_router, prefix="/reminders", tags=["reminders"])
+# app.include_router(reminders_router, prefix="/reminders", tags=["reminders"])
 app.include_router(moodletasks_router, prefix="/moodletasks", tags=["moodletasks"])
 class TaskResponse(BaseModel):
     id: int

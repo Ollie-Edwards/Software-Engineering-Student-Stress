@@ -11,10 +11,10 @@ class TaskPreferenceEnum(PyEnum):
     importance_first = "importance_first"
     due_date_first = "due_date_first"
 
-class TaskReminderMethodEnum(PyEnum):  # Only email is implemented currently
-    email = "email"
-    sms = "sms"
-    push_notification = "push_notification"
+# class TaskReminderMethodEnum(PyEnum):  # Only email is implemented currently
+#     email = "email"
+#     sms = "sms"
+#     push_notification = "push_notification"
 
 class User(Base):
     __tablename__ = "users"
@@ -28,13 +28,13 @@ class User(Base):
     )
     from datetime import timedelta
 
-    task_reminder_interval = Column(Interval, default=timedelta(days=1))
-    task_reminder_method = Column(
-        Enum(TaskReminderMethodEnum, name="task_reminder_method_enum"),
-        default=TaskReminderMethodEnum.email,
-    )
+    # task_reminder_interval = Column(Interval, default=timedelta(days=1))
+    # task_reminder_method = Column(
+    #     Enum(TaskReminderMethodEnum, name="task_reminder_method_enum"),
+    #     default=TaskReminderMethodEnum.email,
+    # )
     email = Column(String(255), unique=True)
     phone_number = Column(String(20), unique=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
-    notifications = relationship("Notification", back_populates="user")
+    # notifications = relationship("Notification", back_populates="user")

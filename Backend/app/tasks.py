@@ -16,23 +16,6 @@ router = APIRouter()
 
 # Added for testing, can be replaced
 
-@router.post("", response_model=TaskResponse)
-def create_task(task: TaskCreate, db: Session = Depends(get_db)):
-    db_task = Task(
-        user_id=task.user_id,
-        title=task.title,
-        description=task.description,
-        importance=task.importance,
-        length=task.length,
-        tags=task.tags,
-        due_at=task.due_at,
-        reminder_enabled=task.reminder_enabled,
-    )
-    db.add(db_task)
-    db.commit()
-    db.refresh(db_task)
-    return db_task
-
 
 # if user id header not given in a request (it normally would be in practice since each task belongs to a user, but some tests don't have it)
 # it is assumed to be user id 1

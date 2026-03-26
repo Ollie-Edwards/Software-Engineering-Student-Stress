@@ -38,5 +38,5 @@ class Task(Base):
     completed_at = Column(TIMESTAMP, nullable=True)
 
     user = relationship("User", backref="tasks")
-    reminders = relationship("Reminders", back_populates="task")
+    # reminders = relationship("Reminders", back_populates="task")
     subtasks = relationship("Subtask", back_populates="task", cascade="all, delete-orphan", lazy="joined")

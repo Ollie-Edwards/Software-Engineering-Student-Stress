@@ -299,16 +299,16 @@ def get_task(
     return task
 
 
-# Create a new task
 @router.post("", response_model=TaskResponse)
 def create_task(
     task_data: dict = Body(...),
     db: Session = Depends(get_db),
     current_user_id: int = Depends(get_current_user_id),
 ):
-    # Convert due_at from JSON string into Python datetime if it is present
     if task_data.get("due_at"):
         task_data["due_at"] = datetime.fromisoformat(task_data["due_at"])
+
+    task_data["tags"] = task_data.get("tags") or []
 
     task_data["user_id"] = current_user_id
     new_task = Task(**task_data)

@@ -3,8 +3,8 @@ import LinkButton from '../components/LinkElement';
 
 const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
     {/* High (8-10), Medium (4-7), Low (1-3)*/}
-          const isHigh = task.importance >= 8;
-          const isMedium = task.importance >= 4 && task.importance < 8;
+          const isHigh = task.priority >= 70;
+          const isMedium = task.priority >= 40 && task.priority < 70;
 
           const barColor = isHigh ? 'bg-red-500' : isMedium ? 'bg-amber-400' : 'bg-emerald-500';
           const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
@@ -181,14 +181,17 @@ const handleUpdateSubtask = async (subtaskId) => {
               <p className="text-slate-600 text-sm line-clamp-2">{task.description}</p>
 
               {/* Detail info */}
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4 pt-4 border-t mt-auto text-xs text-slate-500">
-                <p><strong>Status:</strong> {task.completed ? "Completed" : "Not Completed"}</p>
+              <div className="grid grid-cols-3 gap-y-2 gap-x-4 pt-4 border-t mt-auto text-xs text-slate-500">
                 <p><strong>Importance:</strong> {task.importance}</p>
-                <p><strong>Length:</strong> {task.length}</p>
-                <p><strong>Due At:</strong> {task.due_at ? new Date(task.due_at).toLocaleString() : "N/A"}</p>
-                <p><strong>Created At:</strong> {new Date(task.created_at).toLocaleString()}</p>
-                <p><strong>Updated At:</strong> {new Date(task.updated_at).toLocaleString()}</p>
-              </div>
+                <p><strong>Length:</strong> {task.length} mins</p>
+                <p><strong>Due In:</strong> {task.due_at ? (() => {
+                  const diff = new Date(task.due_at) - new Date();
+                  if (diff < 0) return "Overdue";
+                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  return days > 0 ? `${days}days ${hours}hours` : `${hours}hours`;
+                })() : "N/A"}</p>
+                </div>
           </div>
           </div>
 
@@ -292,32 +295,93 @@ const handleUpdateSubtask = async (subtaskId) => {
           );
   };
 
+
+// INITIAL TASKS FOR THE RANKED CONDITION
+const INITIAL_TASKS = [
+  {
+    id: 1, user_id: 1,
+    title: "Algorithms & Complexity - Exam Revision",
+    description: "Revise dynamic programming, graph traversal algorithms, and NP-completeness proofs. Focus on past paper questions from 2023-2025.",
+    completed: false, importance: 9, length: 120,
+    tags: ["Revision", "urgent"],
+    due_at: "2026-04-30T09:00:00.000000",
+    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=112847",
+    priority: 88,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 2, user_id: 1,
+    title: "Distributed Systems - Consensus Protocol Essay",
+    description: "Write a 2000 word critical analysis comparing Raft and Paxos consensus algorithms, covering fault tolerance and real-world trade-offs.",
+    completed: false, importance: 7, length: 150,
+    tags: ["Coursework"],
+    due_at: "2026-05-05T17:00:00.000000",
+    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=198423",
+    priority: 62,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 3, user_id: 1,
+    title: "Computer Vision - Lab Report Writeup",
+    description: "Document the edge detection and image segmentation experiments from last week's lab. Include result figures and evaluation.",
+    completed: false, importance: 5, length: 90,
+    tags: ["Coursework"],
+    due_at: "2026-05-09T17:00:00.000000",
+    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=203561",
+    priority: 39,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 4, user_id: 1,
+    title: "Book a dentist appointment",
+    description: "Been putting this off for months. Just call and book in for a check-up sometime in May.",
+    completed: false, importance: 3, length: 10,
+    tags: ["personal", "admin"],
+    due_at: "2026-05-03T12:00:00.000000",
+    reference_url: null,
+    priority: 17,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 5, user_id: 1,
+    title: "Find a new Spotify playlist",
+    description: "Current study playlist is getting stale. Spend a few minutes browsing for something new.",
+    completed: false, importance: 1, length: 10,
+    tags: ["personal"],
+    due_at: null,
+    reference_url: null,
+    priority: 3,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 6, user_id: 1,
+    title: "Database Systems - Normalisation Problem Sheet",
+    description: "Complete the third normal form and BCNF decomposition exercises from the week 9 problem sheet. Check answers against the model solutions.",
+    completed: false, importance: 5, length: 60,
+    tags: ["Coursework"],
+    due_at: "2026-05-07T17:00:00.000000",
+    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=217834",
+    priority: 44,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+];
+
 export default function Home({isAdding, setIsAdding}) {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const uncompletedTasks = tasks.filter(task => !task.completed);
   const completedTasks = tasks.filter(task => task.completed);
   const [sortOrder, setSortOrder] = useState("desc");
 
-    async function fetchTasks() {
-      try {
-        const res = await fetch("http://localhost:8000/tasks");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        console.log(data);
-        setTasks(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    useEffect(() => {
-    fetchTasks();
-  }, []);
+  const fetchTasks = () => {};
 
   if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
@@ -407,7 +471,7 @@ export default function Home({isAdding, setIsAdding}) {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 max-w-250 mx-auto space-y-4">
       <div className="flex justify-between items-end mb-8">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
@@ -430,8 +494,8 @@ export default function Home({isAdding, setIsAdding}) {
         {[...uncompletedTasks]
           .sort((a, b) => {
             return sortOrder === "desc" 
-              ? b.importance - a.importance
-              : a.importance - b.importance;
+              ? b.priority  - a.priority 
+              : a.priority  - b.priority ;
           })
           .map(task => <Taskcard 
             key={task.id}
@@ -453,8 +517,8 @@ export default function Home({isAdding, setIsAdding}) {
             {[...completedTasks]
               .sort((a, b) => {
                 return sortOrder === "desc" 
-                  ? b.importance - a.importance
-                  : a.importance - b.importance;
+                  ? b.priority  - a.priority 
+                  : a.priority  - b.priority ;
               })
               .map(task => <Taskcard 
       key={task.id}

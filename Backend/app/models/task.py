@@ -28,7 +28,7 @@ class Task(Base):
     completed = Column(Boolean, nullable=False, default=False)
     importance = Column(SmallInteger, default=0)
     length = Column(Integer)
-    tags = Column(JSON)
+    tags = Column(ARRAY(String), default=list)
     due_at = Column(TIMESTAMP)
     reference_url = Column(String(255), nullable=True)
     reminder_enabled = Column(Boolean, nullable=False, default=False)

@@ -6,10 +6,10 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
           const isHigh = task.priority >= 70;
           const isMedium = task.priority >= 40 && task.priority < 70;
 
-          const barColor = isHigh ? 'bg-red-500' : isMedium ? 'bg-amber-400' : 'bg-emerald-500';
-          const badgeBg = isHigh ? 'bg-red-100' : isMedium ? 'bg-amber-100' : 'bg-emerald-100';
-          const badgeText = isHigh ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700';
-          const priorityLabel = isHigh ? 'High' : isMedium ? 'Medium' : 'Low';
+          const barColor = 'bg-slate-400';
+          const badgeBg = 'bg-slate-100';
+          const badgeText = 'text-slate-600';
+          const priorityLabel = 'Task';
 
           const [showSubtasks, setShowSubtasks] = useState(false);
           const [editingSubtaskId, setEditingSubtaskId] = useState(null);
@@ -145,9 +145,6 @@ const handleUpdateSubtask = async (subtaskId) => {
               {/* Title */}
               <div className ="flex justify-between items-start">
                 <div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-1 inline-block ${badgeBg} ${badgeText}`}>
-                    • {priorityLabel} ({task.priority})
-                  </span>
                   <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
                 </div>
                 <div className="flex items-center gap-1">
@@ -373,7 +370,9 @@ const INITIAL_TASKS = [
 ];
 
 export default function Home({isAdding, setIsAdding}) {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [tasks, setTasks] = useState(() => 
+    [...INITIAL_TASKS].sort(() => Math.random() - 0.5)
+  ); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -479,33 +478,21 @@ export default function Home({isAdding, setIsAdding}) {
           You have <span className="font-semibold text-indigo-600">{uncompletedTasks.length}</span> tasks remaining.
         </p>
       </div>
-
-      <div className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg shadow-sm">
-        <span className="text-xs font-bold text-slate-400 uppercase">Sort By</span>
-        <select className="text-xs text-slate-600 font-semibold bg-transparent focus:outline-none cursor-pointer" value = {sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-          <option value="desc">Highest to Lowest priority</option>
-          <option value="asc">Lowest to Highest priority</option>
-        </select>
-      </div>
       </div>
       
-      {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
-      <div className="grid gap-4">
-        {[...uncompletedTasks]
-          .sort((a, b) => {
-            return sortOrder === "desc" 
-              ? b.priority  - a.priority 
-              : a.priority  - b.priority ;
-          })
-          .map(task => <Taskcard 
-            key={task.id}
-            task={task} 
-            setTasks={setTasks}
-            setEditingTask={setEditingTask}
-            handleDeleteTask={handleDeleteTask}
-            fetchTasks={fetchTasks}
-          />)}
-      </div>  
+    {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
+    <div className="grid gap-4">
+      {uncompletedTasks.map(task => (
+        <Taskcard
+          key={task.id}
+          task={task}
+          setTasks={setTasks}
+          setEditingTask={setEditingTask}
+          handleDeleteTask={handleDeleteTask}
+          fetchTasks={fetchTasks}
+        />
+      ))}
+    </div>
 
       {completedTasks.length > 0 && (
         <div className="mt-12 space-y-4 pt-8 border-t border-dashed">

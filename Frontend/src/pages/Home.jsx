@@ -1,6 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import LinkButton from '../components/LinkElement';
 
+
+//  VERY IMPORTANT MESSAGE
+
+// ***THIS IS NOT FOR SUBMISSION OR MERGE TO MAIN***, THIS IS ONLY FOR
+// FACILITATING DATA COLLECTION FOR THE STUDY, and will be removed after use.
+
+
+
 // ── Experiment phases ──────────────────────────────────────────────
 // "instructions" → "ui" → "black" → "likert" → "done"
 

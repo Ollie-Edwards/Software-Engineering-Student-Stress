@@ -1,299 +1,110 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import LinkButton from '../components/LinkElement';
 
+
+//  VERY IMPORTANT MESSAGE
+
+// ***THIS IS NOT FOR SUBMISSION OR MERGE TO MAIN***, THIS IS ONLY FOR
+// FACILITATING DATA COLLECTION FOR THE STUDY, and will be removed after use.
+
+
+
+// ── Experiment phases ──────────────────────────────────────────────
+// "instructions" → "ui" → "black" → "likert" → "done"
+
+const LIKERT_QUESTION = "I felt overwhelmed while deciding which task to complete next";
+const LIKERT_QUESTION_2 = "I felt stressed while deciding which task to complete next"
+
+// ── Taskcard (unchanged) ───────────────────────────────────────────
 const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}) => {
-    {/* High (8-10), Medium (4-7), Low (1-3)*/}
-          const isHigh = task.priority >= 70;
-          const isMedium = task.priority >= 40 && task.priority < 70;
+  const isHigh   = task.priority >= 70;
+  const isMedium = task.priority >= 40 && task.priority < 70;
 
-          const barColor = 'bg-slate-400';
-          const badgeBg = 'bg-slate-100';
-          const badgeText = 'text-slate-600';
-          const priorityLabel = 'Task';
+  const barColor = 'bg-slate-400';
+  const badgeBg = 'bg-slate-100';
+  const badgeText = 'text-slate-600';
+  const priorityLabel = 'Task';
 
-          const [showSubtasks, setShowSubtasks] = useState(false);
-          const [editingSubtaskId, setEditingSubtaskId] = useState(null);
-          const [tempSubtaskTitle, setTempSubtaskTitle] = useState("");
-          const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
-          const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [showSubtasks,     setShowSubtasks]     = useState(false);
+  const [tempSubtaskTitle, setTempSubtaskTitle] = useState("");
+  const [newSubtaskTitle,  setNewSubtaskTitle]  = useState("");
+  const [isAddingSubtask,  setIsAddingSubtask]  = useState(false);
 
-          const toggleComplete = async (e) => {
-                  e.stopPropagation();
-                  const currentlyCompleted = task.completed; 
-                  const newStatus = !currentlyCompleted;
-
-                  setTasks(prevTasks => prevTasks.map(t => 
-                    t.id === task.id ? { ...t, completed: newStatus, subtasks: t.subtasks.map(st => ({ ...st, completed: newStatus })) } : t
-                  ));
-                  const endpoint = newStatus ? 'complete' : 'reopen';
-                  const url = `http://localhost:8000/tasks/task/${task.id}/${endpoint}`;
-
-                  try {
-                    const response = await fetch(url, { method: 'POST' });
-
-                    if (!response.ok) {
-                      throw new Error("Database update failed");
-                    }
-                  } catch (error) {
-                    console.error(error);
-                    setTasks(prevTasks => prevTasks.map(t => 
-                    t.id === task.id ? { ...t, completed: currentlyCompleted, subtasks: t.subtasks.map(st => ({ ...st, completed: currentlyCompleted }))} : t
-                    ));
-                  }
-            }
-
-          const toggleSubtask = async (subtask) => {
-          const endpoint = subtask.completed ? 'reopen' : 'complete';
-          try {
-            const response = await fetch(`http://localhost:8000/tasks/subtask/${subtask.id}/${endpoint}`, {
-              method: 'POST',
-            });
-            if (response.ok) fetchTasks(); 
-          } catch (err) {
-            console.error("Fetch error:", err);
-          }
-          };
-
-          const handleDeleteSubtask = async (subtaskId) => {
+  const toggleComplete = async (e) => {
+    e.stopPropagation();
+    const currentlyCompleted = task.completed;
+    const newStatus = !currentlyCompleted;
+    setTasks(prev => prev.map(t =>
+      t.id === task.id ? { ...t, completed: newStatus, subtasks: t.subtasks.map(st => ({ ...st, completed: newStatus })) } : t
+    ));
     try {
-        const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-User-Id': '1'
-            }
-        });
-
-        if (response.ok) {
-            setTasks(prevTasks => prevTasks.map(task => ({
-                ...task,
-                subtasks: task.subtasks.filter(st => st.id !== subtaskId)
-            })));
-        } else {
-            console.error("Failed to delete subtask");
-        }
-    } catch (error) {
-        console.error("Error deleting subtask:", error);
-    }
-};
-
-const handleUpdateSubtask = async (subtaskId) => {
-  try {
-    const response = await fetch(`http://localhost:8000/tasks/subtasks/${subtaskId}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-User-Id': '1' 
-      },
-      body: JSON.stringify({ title: tempSubtaskTitle })
-    });
-
-    if (response.ok) {
-      setTasks(prev => prev.map(t => {
-        if (t.id === task.id) {
-          return {
-            ...t,
-            subtasks: t.subtasks.map(st => 
-              st.id === subtaskId ? { ...st, title: tempSubtaskTitle } : st
-            )
-          };
-        }
-        return t;
-      }));
-      setEditingSubtaskId(null);
-    }
-  } catch (err) {
-    console.error("Failed to update subtask:", err);
-    }
-  };
-
-  const handleAddSubtask = async () => {
-    try {
-        const response = await fetch(`http://localhost:8000/tasks/subtasks`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-User-Id': '1' 
-            },
-            body: JSON.stringify({ 
-                title: newSubtaskTitle,
-                task_id: task.id,
-                completed: false 
-            })
-        });
-
-        if (response.ok) {
-            const createdSubtask = await response.json();
-            // Update local state
-            setTasks(prev => prev.map(t => 
-                t.id === task.id 
-                ? { ...t, subtasks: [...t.subtasks, createdSubtask] } 
-                : t
-            ));
-            setNewSubtaskTitle("");
-            setIsAddingSubtask(false);
-        }
+      const res = await fetch(`http://localhost:8000/tasks/task/${task.id}/${newStatus ? 'complete' : 'reopen'}`, { method: 'POST' });
+      if (!res.ok) throw new Error("Database update failed");
     } catch (err) {
-        console.error("Failed to add subtask:", err);
+      console.error(err);
+      setTasks(prev => prev.map(t =>
+        t.id === task.id ? { ...t, completed: currentlyCompleted, subtasks: t.subtasks.map(st => ({ ...st, completed: currentlyCompleted })) } : t
+      ));
     }
-};
-
-          return(
-          <React.Fragment key={task.id}>
-          <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
-            <div className={`w-2 shrink-0 ${barColor}`} />
-            <div title="Task Modal" className="p-5 flex-1 flex flex-col gap-3">
-              {/* Title */}
-              <div className ="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
-                </div>
-                <div className="flex items-center gap-1">
-                  <LinkButton url={task.reference_url} />
-                  <button onClick={toggleComplete} title="Toggle Complete Task" className="focus:outline-none transition-transform active:scale-90">
-                  {task.completed ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
-                      <rect x="3" y="3" width="18" height="18" rx="3" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
-                      <rect x="3" y="3" width="18" height="18" rx="3" />
-                    </svg>
-                  )}
-                </button>
-                <button onClick={(e) => {e.stopPropagation(); handleDeleteTask(task.id);}} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>  
-                <button title="Toggle Subtasks" onClick={(e) => {e.stopPropagation(); setShowSubtasks(!showSubtasks);}} className="p-1 hover:bg-slate-100 rounded transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showSubtasks ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p className="text-slate-600 text-sm line-clamp-2">{task.description}</p>
-
-              {/* Detail info */}
-              <div className="grid grid-cols-3 gap-y-2 gap-x-4 pt-4 border-t mt-auto text-xs text-slate-500">
-                <p><strong>Importance:</strong> {task.importance}</p>
-                <p><strong>Length:</strong> {task.length} mins</p>
-                <p><strong>Due In:</strong> {task.due_at ? (() => {
-                  const diff = new Date(task.due_at) - new Date();
-                  if (diff < 0) return "Overdue";
-                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                  return days > 0 ? `${days}days ${hours}hours` : `${hours}hours`;
-                })() : "N/A"}</p>
-                </div>
-          </div>
-          </div>
-
-          {showSubtasks && (
-  <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/50 rounded-b-xl p-4 space-y-3">
-    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Subtasks</h4>
-    
-    {task.subtasks && task.subtasks.length > 0 ? (
-      task.subtasks.map((sub) => (
-  <div  
-    key={sub.id} 
-    className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center justify-between group hover:border-indigo-300 transition-all"
-  >
-    <div className="flex items-center gap-3 flex-1">
-      <input 
-        type="checkbox" 
-        checked={sub.completed}
-        onChange={() => toggleSubtask(sub)}
-        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-      />
-      
-      {editingSubtaskId === sub.id ? (
-        <input 
-          autoFocus
-          className="text-sm font-medium text-slate-700 border-b border-indigo-500 outline-none flex-1"
-          value={tempSubtaskTitle}
-          onChange={(e) => setTempSubtaskTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleUpdateSubtask(sub.id);
-            if (e.key === 'Escape') setEditingSubtaskId(null);
-          }}
-        />
-      ) : (
-        <span 
-          onClick={() => {
-            setEditingSubtaskId(sub.id);
-            setTempSubtaskTitle(sub.title);
-          }}
-          className={`text-sm font-medium cursor-text flex-1 ${sub.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}
-        >
-          {sub.title}
-        </span>
-      )}
-    </div>
-
-    <div className="flex items-center gap-2">
-      {editingSubtaskId === sub.id ? (
-        <button 
-        title="Save Subtask"
-          onClick={() => handleUpdateSubtask(sub.id)}
-          className="text-[10px] font-bold text-indigo-600 uppercase hover:text-indigo-800"
-        >
-          Save
-        </button>
-      ) : (
-        <button 
-          title="Delete Subtask"
-          onClick={(e) => {e.stopPropagation(); handleDeleteSubtask(sub.id);}} 
-          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      )}
-      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sub.completed ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
-        {sub.completed ? 'Done' : 'In Progress'}
-      </span>
-    </div>
-  </div>
-))
-    ) : (
-      <p className="text-sm text-slate-400 italic">No subtasks found for this task.</p>
-    )}
-{isAddingSubtask ? (
-    <div className="flex items-center gap-2 mt-2 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
-        <input
-            autoFocus
-            className="flex-1 bg-transparent text-sm outline-none px-2 py-1"
-            placeholder="What needs to be done?"
-            value={newSubtaskTitle}
-            onChange={(e) => setNewSubtaskTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddSubtask()}
-        />
-        <button onClick={handleAddSubtask} className="text-xs font-bold text-indigo-600 px-2 hover:text-indigo-800">Add</button>
-    </div>
-) : (
-    <button 
-        onClick={() => setIsAddingSubtask(true)}
-        className="mt-2 w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-bold uppercase tracking-wider hover:border-indigo-300 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
-    >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-        Add Subtask
-    </button>
-)}
-  </div>
-)}
-</React.Fragment>
-          );
   };
 
+  return (
+    <React.Fragment key={task.id}>
+      <div key={task.id} onClick={() => setEditingTask(task)} className="cursor-pointer relative flex border rounded-2xl shadow-sm overflow-hidden bg-white">
+        <div className={`w-2 shrink-0 ${barColor}`} />
+        <div title="Task Modal" className="p-5 flex-1 flex flex-col gap-3">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 leading-tight">{task.title}</h2>
+            </div>
+            <div className="flex items-center gap-1">
+              <LinkButton url={task.reference_url} />
+              <button onClick={toggleComplete} title="Toggle Complete Task" className="focus:outline-none transition-transform active:scale-90">
+                {task.completed ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                    <rect x="3" y="3" width="18" height="18" rx="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-400 hover:text-black">
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                  </svg>
+                )}
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors rounded-lg" title="Delete Task">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+              <button title="Toggle Subtasks" onClick={(e) => { e.stopPropagation(); setShowSubtasks(!showSubtasks); }} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${showSubtasks ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-// INITIAL TASKS FOR THE RANKED CONDITION
+          <p className="text-slate-600 text-sm line-clamp-2">{task.description}</p>
+
+          <div className="grid grid-cols-3 gap-y-2 gap-x-4 pt-4 border-t mt-auto text-xs text-slate-500">
+            <p><strong>Importance:</strong> {task.importance}</p>
+            <p><strong>Length:</strong> {task.length} mins</p>
+            <p><strong>Due In:</strong> {task.due_at ? (() => {
+              const diff = new Date(task.due_at) - new Date();
+              if (diff < 0) return "Overdue";
+              const days  = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+            })() : "N/A"}</p>
+          </div>
+        </div>
+      </div>
+
+     
+    </React.Fragment>
+  );
+};
+
+// ── Static task data ───────────────────────────────────────────────
 const INITIAL_TASKS = [
   {
     id: 1, user_id: 1,
@@ -321,6 +132,18 @@ const INITIAL_TASKS = [
   },
   {
     id: 3, user_id: 1,
+    title: "Database Systems - Normalisation Problem Sheet",
+    description: "Complete the third normal form and BCNF decomposition exercises from the week 9 problem sheet. Check answers against the model solutions.",
+    completed: false, importance: 5, length: 60,
+    tags: ["Coursework"],
+    due_at: "2026-05-07T17:00:00.000000",
+    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=217834",
+    priority: 44,
+    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
+    subtasks: []
+  },
+  {
+    id: 4, user_id: 1,
     title: "Computer Vision - Lab Report Writeup",
     description: "Document the edge detection and image segmentation experiments from last week's lab. Include result figures and evaluation.",
     completed: false, importance: 5, length: 90,
@@ -332,7 +155,7 @@ const INITIAL_TASKS = [
     subtasks: []
   },
   {
-    id: 4, user_id: 1,
+    id: 5, user_id: 1,
     title: "Book a dentist appointment",
     description: "Been putting this off for months. Just call and book in for a check-up sometime in May.",
     completed: false, importance: 3, length: 10,
@@ -344,7 +167,7 @@ const INITIAL_TASKS = [
     subtasks: []
   },
   {
-    id: 5, user_id: 1,
+    id: 6, user_id: 1,
     title: "Find a new Spotify playlist",
     description: "Current study playlist is getting stale. Spend a few minutes browsing for something new.",
     completed: false, importance: 1, length: 10,
@@ -355,287 +178,240 @@ const INITIAL_TASKS = [
     created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
     subtasks: []
   },
-  {
-    id: 6, user_id: 1,
-    title: "Database Systems - Normalisation Problem Sheet",
-    description: "Complete the third normal form and BCNF decomposition exercises from the week 9 problem sheet. Check answers against the model solutions.",
-    completed: false, importance: 5, length: 60,
-    tags: ["Coursework"],
-    due_at: "2026-05-07T17:00:00.000000",
-    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=217834",
-    priority: 44,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
 ];
 
-export default function Home({isAdding, setIsAdding}) {
+// ── Experiment overlay components ──────────────────────────────────
+function InstructionScreen({ onReady }) {
+  return (
+    <div
+      className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50 cursor-pointer select-none"
+      onClick={onReady}
+    >
+      <div className="max-w-lg text-center space-y-6 px-8">
+        <h1 className="text-white text-4xl font-bold tracking-tight">Task Study (B)</h1>
+        <h4 className="text-white text-xl font-bold tracking-tight">Task instructions</h4>
+        <div className="text-slate-300 text-base leading-relaxed space-y-3">
+          <ul className="text-left text-white list-disc pl-5 space-y-2">
+            <li>You will be shown a task management interface.</li>
+            <li>Imagine these are tasks that you need to complete.</li>
+            <li>Look at the tasks and decide which one you would work on next.</li>
+            <li>Think about doing this as fast as you can comfortably make a decision.</li>
+            <li>Once you have made your decision, <strong className="text-white">click anywhere</strong> on the screen.</li>
+          </ul>
+        </div>
+        <div className="pt-4">
+          <span className="inline-block border border-slate-500 text-slate-400 text-sm px-6 py-2 rounded-full">
+            Click anywhere when ready
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LikertScreen({ onSubmit }) {
+  const [score1, setScore1] = useState(null);
+  const [score2, setScore2] = useState(null);
+
+  const labels1 = [
+    { value: 1, text: "Extremely Overwhelmed" },
+    { value: 2, text: "Overwhelmed" },
+    { value: 3, text: "Somewhat Overwhelmed" },
+    { value: 4, text: "Neutral" },
+    { value: 5, text: "Somewhat Relaxed" },
+    { value: 6, text: "Relaxed" },
+    { value: 7, text: "Extremely Relaxed" },
+  ];
+
+  const labels2 = [
+    { value: 1, text: "Extremely Stressed" },
+    { value: 2, text: "Stressed" },
+    { value: 3, text: "Somewhat Stressed" },
+    { value: 4, text: "Neutral" },
+    { value: 5, text: "Somewhat Calm" },
+    { value: 6, text: "Calm" },
+    { value: 7, text: "Extremely Calm" },
+  ];
+  const renderScale = (question, selected, setSelected, labels) => (
+    <div className="space-y-4">
+      <p className="text-white text-xl font-medium leading-snug">{question}</p>
+      <div className="flex justify-between gap-3">
+        {labels.map(({ value, text }) => (
+          <button
+            key={value}
+            onClick={() => setSelected(value)}
+            className={`flex-1 flex flex-col items-center gap-2 py-4 rounded-xl border transition-all
+              ${selected === value
+                ? 'border-indigo-400 bg-indigo-600 text-white'
+                : 'border-slate-600 bg-slate-900 text-slate-300 hover:border-slate-400'}`}
+          >
+            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-[10px] uppercase tracking-wide leading-tight">{text}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-50 px-8">
+      <div className="max-w-xl w-full text-center space-y-10">
+        {renderScale(LIKERT_QUESTION, score1, setScore1, labels1)}
+        {renderScale(LIKERT_QUESTION_2, score2, setScore2, labels2)}
+        <button
+          disabled={score1 === null || score2 === null}
+          onClick={() => onSubmit(score1, score2)}
+          className="px-10 py-3 rounded-full font-bold text-sm transition-all
+            disabled:opacity-30 disabled:cursor-not-allowed
+            bg-indigo-600 hover:bg-indigo-500 text-white"
+        >
+          Submit
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main export ────────────────────────────────────────────────────
+export default function Home({ isAdding, setIsAdding }) {
   const [tasks, setTasks] = useState(() => 
     [...INITIAL_TASKS].sort(() => Math.random() - 0.5)
-  ); 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  );
   const [editingTask, setEditingTask] = useState(null);
-  const uncompletedTasks = tasks.filter(task => !task.completed);
-  const completedTasks = tasks.filter(task => task.completed);
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [sortOrder, setSortOrder]     = useState("desc");
 
-  const fetchTasks = () => {};
+  // Experiment state: "instructions" | "ui" | "black" | "likert" | "done"
+  const [phase, setPhase]   = useState("instructions");
+  const uiShownAt           = useRef(null);
 
-  if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  const fetchTasks      = () => {};
+  const uncompletedTasks = tasks.filter(t => !t.completed);
+  const completedTasks   = tasks.filter(t => t.completed);
 
+  // Phase transitions
+  const handleReady = () => {
+    uiShownAt.current = performance.now();
+    setPhase("ui");
+  };
+
+  const handleUiClick = () => {
+    if (phase !== "ui") return;
+    const elapsed = ((performance.now() - uiShownAt.current)).toFixed(3);
+    console.log(`[Experiment] Time to decision: ${elapsed}ms`);
+    setPhase("likert");
+  };
+
+const handleLikertSubmit = (score1, score2) => {
+  console.log(`[Experiment] Likert Q1 (overwhelmed): ${score1}/7`);
+  console.log(`[Experiment] Likert Q2 (stressed): ${score2}/7`);
+  setPhase("done");
+};
 
   const handleUpdateTask = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-
+    const formData   = new FormData(e.target);
     const updatedData = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      importance: parseInt(formData.get('importance')) || 0,
-      length: parseInt(formData.get('length')) || null,
-      reminder_enabled: formData.get('reminder') === 'on' 
+      title:            formData.get('title'),
+      description:      formData.get('description'),
+      importance:       parseInt(formData.get('importance')) || 0,
+      length:           parseInt(formData.get('length')) || null,
+      reminder_enabled: formData.get('reminder') === 'on',
     };
-
     try {
-      const response = await fetch(`http://localhost:8000/tasks/${editingTask.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
+      const res = await fetch(`http://localhost:8000/tasks/${editingTask.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedData),
       });
-
-      if (response.ok) {
-        const savedTask = await response.json();
-        setTasks(prev => prev.map(t => t.id === savedTask.id ? savedTask : t));
-        setEditingTask(null);
-      }
-    } catch (error) {
-      console.error("Update failed:", error);
-    }
+      if (res.ok) { setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...updatedData } : t)); setEditingTask(null); }
+    } catch (err) { console.error("Update failed:", err); }
   };
 
-  const handleCreateTask = async (e) => {
+  const handleCreateTask = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-
-    const newTaskData = {
-      user_id: 1,
-      title: formData.get('title'),
-      description: formData.get('description'),
-      importance: parseInt(formData.get('importance')) || 0,
-      length: parseInt(formData.get('length')) || null,
-      due_at: formData.get('due_at') ? new Date(formData.get('due_at')).toISOString() : null,
-      reminder_enabled: formData.get('reminder') === 'on',
-      completed: false
+    const newTask  = {
+      id:         Date.now(), user_id: 1,
+      title:      formData.get('title'),
+      description:formData.get('description'),
+      importance: parseInt(formData.get('importance')) || 5,
+      length:     parseInt(formData.get('length')) || null,
+      due_at:     formData.get('due_at') ? new Date(formData.get('due_at')).toISOString() : null,
+      priority:   parseInt(formData.get('importance')) * 6 || 30,
+      completed: false, tags: [], subtasks: [],
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
-
-    try {
-      const response = await fetch('http://localhost:8000/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTaskData),
-      });
-
-      if (response.ok) {
-        const createdTask = await response.json();
-        setTasks(prev => [...prev, createdTask]);
-        setIsAdding(false);
-      }
-      } catch (error) {
-      console.error("Task creation failed:", error);
-    }
+    setTasks(prev => [...prev, newTask]);
+    setIsAdding(false);
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleDeleteTask = (taskId) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
-  
-    try {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setTasks(prev => prev.filter(task => task.id !== taskId));
-      
-        if (editingTask?.id === taskId) {
-          setEditingTask(null);
-        }
-      } else {
-        console.error("Failed to delete task");
-      }
-    } catch (error) {
-      console.error("Error during deletion:", error);
-    }
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+    if (editingTask?.id === taskId) setEditingTask(null);
   };
+
+  const sortedUncompleted = [...uncompletedTasks].sort((a, b) =>
+    sortOrder === "desc" ? b.priority - a.priority : a.priority - b.priority
+  );
+  const sortedCompleted = [...completedTasks].sort((a, b) =>
+    sortOrder === "desc" ? b.priority - a.priority : a.priority - b.priority
+  );
 
   return (
-    <div className="p-6 max-w-250 mx-auto space-y-4">
-      <div className="flex justify-between items-end mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
-        <p className="text-slate-500 mt-1">
-          You have <span className="font-semibold text-indigo-600">{uncompletedTasks.length}</span> tasks remaining.
-        </p>
-      </div>
-      </div>
-      
-    {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
-    <div className="grid gap-4">
-      {uncompletedTasks.map(task => (
-        <Taskcard
-          key={task.id}
-          task={task}
-          setTasks={setTasks}
-          setEditingTask={setEditingTask}
-          handleDeleteTask={handleDeleteTask}
-          fetchTasks={fetchTasks}
-        />
-      ))}
-    </div>
-
-      {completedTasks.length > 0 && (
-        <div className="mt-12 space-y-4 pt-8 border-t border-dashed">
-          <h1 className="text-3xl font-bold text-slate-900">Completed</h1>
-          <p className="text-slate-500 mt-1">
-            You have completed <span className="font-semibold text-indigo-600">{completedTasks.length}</span> tasks.
-          </p>
-          <div className="grid gap-4"> 
-            {[...completedTasks]
-              .sort((a, b) => {
-                return sortOrder === "desc" 
-                  ? b.priority  - a.priority 
-                  : a.priority  - b.priority ;
-              })
-              .map(task => <Taskcard 
-      key={task.id}
-      task={task} 
-      setTasks={setTasks}
-      setEditingTask={setEditingTask}
-      handleDeleteTask={handleDeleteTask}
-      fetchTasks={fetchTasks} 
-    />)}
-          </div>
+    <>
+      {/* ── Experiment overlays ── */}
+      {phase === "instructions" && <InstructionScreen onReady={handleReady} />}
+      {phase === "likert"       && <LikertScreen onSubmit={handleLikertSubmit} />}
+      {phase === "done"         && (
+        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
+          <p className="text-slate-500 text-sm">Session complete. Thank you.</p>
         </div>
       )}
 
-      {editingTask && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">Edit Task</h2>
-                <button onClick={() => setEditingTask(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
-            </div>
-      
-            <form onSubmit={handleUpdateTask} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input name="title" required
-                  className="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  defaultValue={editingTask.title} 
-                />
-              </div>
-        
+      {/* ── UI (visible only during "ui" phase, click dismisses it) ── */}
+      <div
+        className={phase === "ui" ? "block" : "hidden"}
+        onClick={handleUiClick}
+      >
+        <div className="p-6 max-w-250 mx-auto space-y-4">
+          <div className="flex justify-between items-end mb-8">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-              <textarea name="description"
-                className="w-full border rounded-xl px-4 py-2 h-32 focus:ring-2 focus:ring-indigo-500 outline-none"
-                defaultValue={editingTask.description} 
+              <h1 className="text-3xl font-bold text-slate-900">Tasks</h1>
+              <p className="text-slate-500 mt-1">
+                You have <span className="font-semibold text-indigo-600">{uncompletedTasks.length}</span> tasks remaining.
+              </p>
+            </div>
+          </div>
+
+          {uncompletedTasks.length === 0 && <p>No tasks found.</p>}
+          <div className="grid gap-4">
+            {uncompletedTasks.map(task => (
+              <Taskcard
+                key={task.id}
+                task={task}
+                setTasks={setTasks}
+                setEditingTask={setEditingTask}
+                handleDeleteTask={handleDeleteTask}
+                fetchTasks={fetchTasks}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                <input required name="importance" type="number" min="1" max="10" defaultValue={editingTask.importance} className="w-full border rounded-xl px-4 py-2 outline-none" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length (e.g. 30m)</label>
-                <input name="length" defaultValue={editingTask.length} className="w-full border rounded-xl px-4 py-2 outline-none" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Due Date</label>
-              <input name="due_at" type="datetime-local" defaultValue={editingTask.due_at ? editingTask.due_at.substring(0, 16) : ""} className="w-full border rounded-xl px-4 py-2 outline-none" />
-            </div>
-
-            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-              <input name="reminder_enabled" type="checkbox" defaultChecked={editingTask.reminder} className="w-5 h-5 accent-indigo-600" />
-              <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button 
-                type="button"
-                onClick={() => setEditingTask(null)}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all"
-              >
-                Save Changes
-              </button>
-            </div>
-            </form>
+            ))}
           </div>
-        </div>
-      )}
 
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center bg-indigo-50">
-              <h2 className="text-xl font-bold text-slate-800">Create New Task</h2>
-              <button title="Close Modal" onClick={() => setIsAdding(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+          {completedTasks.length > 0 && (
+            <div className="mt-12 space-y-4 pt-8 border-t border-dashed">
+              <h1 className="text-3xl font-bold text-slate-900">Completed</h1>
+              <p className="text-slate-500 mt-1">
+                You have completed <span className="font-semibold text-indigo-600">{completedTasks.length}</span> tasks.
+              </p>
+              <div className="grid gap-4">
+                {sortedCompleted.map(task => (
+                  <Taskcard key={task.id} task={task} setTasks={setTasks}
+                    setEditingTask={setEditingTask} handleDeleteTask={handleDeleteTask} fetchTasks={fetchTasks} />
+                ))}
+              </div>
             </div>
-      
-            <form onSubmit={handleCreateTask} className="p-6 space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Title</label>
-                <input name="title" required placeholder="Title" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
-                <textarea name="description" placeholder="Add some details..." className="w-full border rounded-xl px-4 py-2 h-20 outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Due Date & Time
-                </label>
-              <input name="due_at" type="datetime-local" className="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Importance (1-10)</label>
-                  <input name="importance" required type="number" min="1" max="10" placeholder="5" className="w-full border rounded-xl px-4 py-2 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Length</label>
-                  <input name="length" type="number" min="0" placeholder="30" className="w-full border rounded-xl px-4 py-2 outline-none" />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                <input name="reminder_enabled" type="checkbox" className="w-5 h-5 accent-indigo-600" />
-                  <span className="text-sm font-semibold text-slate-700">Set the reminder</span>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setIsAdding(false)} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-slate-100">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-200">Create Task</button>
-              </div>
-            </form>
-          </div>
+          )}
         </div>
-      )}
-  
-    </div>
+      </div>
+    </>
   );
 }

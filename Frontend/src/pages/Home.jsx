@@ -217,23 +217,23 @@ function LikertScreen({ onSubmit }) {
   const [score2, setScore2] = useState(null);
 
   const labels1 = [
-    { value: 1, text: "Extremely Overwhelmed" },
-    { value: 2, text: "Overwhelmed" },
-    { value: 3, text: "Somewhat Overwhelmed" },
+    { value: 1, text: "Strongly Disagree" },
+    { value: 2, text: "Disagree  " },
+    { value: 3, text: "Somewhat Disagree" },
     { value: 4, text: "Neutral" },
-    { value: 5, text: "Somewhat Relaxed" },
-    { value: 6, text: "Relaxed" },
-    { value: 7, text: "Extremely Relaxed" },
+    { value: 5, text: "Somewhat Agree" },
+    { value: 6, text: "Agree" },
+    { value: 7, text: "Strongly Agree" },
   ];
 
   const labels2 = [
-    { value: 1, text: "Extremely Stressed" },
-    { value: 2, text: "Stressed" },
-    { value: 3, text: "Somewhat Stressed" },
+    { value: 1, text: "Strongly Disagree" },
+    { value: 2, text: "Disagree  " },
+    { value: 3, text: "Somewhat Disagree" },
     { value: 4, text: "Neutral" },
-    { value: 5, text: "Somewhat Calm" },
-    { value: 6, text: "Calm" },
-    { value: 7, text: "Extremely Calm" },
+    { value: 5, text: "Somewhat Agree" },
+    { value: 6, text: "Agree" },
+    { value: 7, text: "Strongly Agree" },
   ];
   const renderScale = (question, selected, setSelected, labels) => (
     <div className="space-y-4">

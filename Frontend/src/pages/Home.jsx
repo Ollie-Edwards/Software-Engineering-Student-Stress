@@ -295,85 +295,8 @@ const handleUpdateSubtask = async (subtaskId) => {
           );
   };
 
-
-// INITIAL TASKS FOR THE RANKED CONDITION
-const INITIAL_TASKS = [
-  {
-    id: 1, user_id: 1,
-    title: "Algorithms & Complexity - Exam Revision",
-    description: "Revise dynamic programming, graph traversal algorithms, and NP-completeness proofs. Focus on past paper questions from 2023-2025.",
-    completed: false, importance: 9, length: 120,
-    tags: ["Revision", "urgent"],
-    due_at: "2026-04-30T09:00:00.000000",
-    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=112847",
-    priority: 88,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-  {
-    id: 2, user_id: 1,
-    title: "Distributed Systems - Consensus Protocol Essay",
-    description: "Write a 2000 word critical analysis comparing Raft and Paxos consensus algorithms, covering fault tolerance and real-world trade-offs.",
-    completed: false, importance: 7, length: 150,
-    tags: ["Coursework"],
-    due_at: "2026-05-05T17:00:00.000000",
-    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=198423",
-    priority: 62,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-  {
-    id: 3, user_id: 1,
-    title: "Computer Vision - Lab Report Writeup",
-    description: "Document the edge detection and image segmentation experiments from last week's lab. Include result figures and evaluation.",
-    completed: false, importance: 5, length: 90,
-    tags: ["Coursework"],
-    due_at: "2026-05-09T17:00:00.000000",
-    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=203561",
-    priority: 39,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-  {
-    id: 4, user_id: 1,
-    title: "Book a dentist appointment",
-    description: "Been putting this off for months. Just call and book in for a check-up sometime in May.",
-    completed: false, importance: 3, length: 10,
-    tags: ["personal", "admin"],
-    due_at: "2026-05-03T12:00:00.000000",
-    reference_url: null,
-    priority: 17,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-  {
-    id: 5, user_id: 1,
-    title: "Find a new Spotify playlist",
-    description: "Current study playlist is getting stale. Spend a few minutes browsing for something new.",
-    completed: false, importance: 1, length: 10,
-    tags: ["personal"],
-    due_at: null,
-    reference_url: null,
-    priority: 3,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-  {
-    id: 6, user_id: 1,
-    title: "Database Systems - Normalisation Problem Sheet",
-    description: "Complete the third normal form and BCNF decomposition exercises from the week 9 problem sheet. Check answers against the model solutions.",
-    completed: false, importance: 5, length: 60,
-    tags: ["Coursework"],
-    due_at: "2026-05-07T17:00:00.000000",
-    reference_url: "https://moodle.bath.ac.uk/course/section.php?id=217834",
-    priority: 44,
-    created_at: "2026-04-29T09:00:00.000000", updated_at: "2026-04-29T09:00:00.000000",
-    subtasks: []
-  },
-];
-
 export default function Home({isAdding, setIsAdding}) {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -381,7 +304,23 @@ export default function Home({isAdding, setIsAdding}) {
   const completedTasks = tasks.filter(task => task.completed);
   const [sortOrder, setSortOrder] = useState("desc");
 
-  const fetchTasks = () => {};
+ async function fetchTasks() {
+      try {
+        const res = await fetch("http://localhost:8000/tasks");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        console.log(data);
+        setTasks(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    useEffect(() => {
+    fetchTasks();
+  }, []);
 
   if (loading) return <div className="p-4 text-lg">Loading tasks...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;

@@ -295,7 +295,7 @@ const handleUpdateSubtask = async (subtaskId) => {
           );
   };
 
-
+ 
 // INITIAL TASKS FOR THE RANKED CONDITION
 const INITIAL_TASKS = [
   {

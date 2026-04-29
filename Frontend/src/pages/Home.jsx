@@ -108,7 +108,7 @@ const Taskcard = ({task, setTasks, setEditingTask, handleDeleteTask, fetchTasks}
 const INITIAL_TASKS = [
   {
     id: 1, user_id: 1,
-    title: "Algorithms & Complexity - Exam Revision",
+    title: "Data Structures & Algorithms - Exam Revision",
     description: "Revise dynamic programming, graph traversal algorithms, and NP-completeness proofs. Focus on past paper questions from 2023-2025.",
     completed: false, importance: 9, length: 120,
     tags: ["Revision", "urgent"],
@@ -120,7 +120,7 @@ const INITIAL_TASKS = [
   },
   {
     id: 2, user_id: 1,
-    title: "Distributed Systems - Consensus Protocol Essay",
+    title: "Cloud Computing - Consensus Protocol Essay",
     description: "Write a 2000 word critical analysis comparing Raft and Paxos consensus algorithms, covering fault tolerance and real-world trade-offs.",
     completed: false, importance: 7, length: 150,
     tags: ["Coursework"],
@@ -132,7 +132,7 @@ const INITIAL_TASKS = [
   },
   {
     id: 3, user_id: 1,
-    title: "Database Systems - Normalisation Problem Sheet",
+    title: "Information Systems - Normalisation Problem Sheet",
     description: "Complete the third normal form and BCNF decomposition exercises from the week 9 problem sheet. Check answers against the model solutions.",
     completed: false, importance: 5, length: 60,
     tags: ["Coursework"],
@@ -144,7 +144,7 @@ const INITIAL_TASKS = [
   },
   {
     id: 4, user_id: 1,
-    title: "Computer Vision - Lab Report Writeup",
+    title: "Image Processing - Lab Report Writeup",
     description: "Document the edge detection and image segmentation experiments from last week's lab. Include result figures and evaluation.",
     completed: false, importance: 5, length: 90,
     tags: ["Coursework"],
@@ -156,7 +156,7 @@ const INITIAL_TASKS = [
   },
   {
     id: 5, user_id: 1,
-    title: "Book a dentist appointment",
+    title: "Book a GP appointment",
     description: "Been putting this off for months. Just call and book in for a check-up sometime in May.",
     completed: false, importance: 3, length: 10,
     tags: ["personal", "admin"],
@@ -168,7 +168,7 @@ const INITIAL_TASKS = [
   },
   {
     id: 6, user_id: 1,
-    title: "Find a new Spotify playlist",
+    title: "Find a new YouTube playlist",
     description: "Current study playlist is getting stale. Spend a few minutes browsing for something new.",
     completed: false, importance: 1, length: 10,
     tags: ["personal"],
@@ -214,23 +214,23 @@ function LikertScreen({ onSubmit }) {
   const [score2, setScore2] = useState(null);
 
   const labels1 = [
-    { value: 1, text: "Extremely Overwhelmed" },
-    { value: 2, text: "Overwhelmed" },
-    { value: 3, text: "Somewhat Overwhelmed" },
+    { value: 1, text: "Strongly Disagree" },
+    { value: 2, text: "Disagree  " },
+    { value: 3, text: "Somewhat Disagree" },
     { value: 4, text: "Neutral" },
-    { value: 5, text: "Somewhat Relaxed" },
-    { value: 6, text: "Relaxed" },
-    { value: 7, text: "Extremely Relaxed" },
+    { value: 5, text: "Somewhat Agree" },
+    { value: 6, text: "Agree" },
+    { value: 7, text: "Strongly Agree" },
   ];
 
   const labels2 = [
-    { value: 1, text: "Extremely Stressed" },
-    { value: 2, text: "Stressed" },
-    { value: 3, text: "Somewhat Stressed" },
+    { value: 1, text: "Strongly Disagree" },
+    { value: 2, text: "Disagree  " },
+    { value: 3, text: "Somewhat Disagree" },
     { value: 4, text: "Neutral" },
-    { value: 5, text: "Somewhat Calm" },
-    { value: 6, text: "Calm" },
-    { value: 7, text: "Extremely Calm" },
+    { value: 5, text: "Somewhat Agree" },
+    { value: 6, text: "Agree" },
+    { value: 7, text: "Strongly Agree" },
   ];
   const renderScale = (question, selected, setSelected, labels) => (
     <div className="space-y-4">
